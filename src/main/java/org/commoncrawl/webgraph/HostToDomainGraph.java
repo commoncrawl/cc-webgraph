@@ -9,7 +9,12 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import crawlercommons.domains.EffectiveTldFinder;
+import it.unimi.dsi.fastutil.Arrays;
+import it.unimi.dsi.fastutil.longs.LongBigArrays;
 
 /**
  * Convert host-level webgraph to domain-level webgraph. A webgraph is
@@ -28,15 +33,20 @@ import crawlercommons.domains.EffectiveTldFinder;
  * memory requirements (number of hosts &times; 4 bytes).
  */
 public class HostToDomainGraph {
-	
+
+	protected static Logger LOG = LoggerFactory.getLogger(HostToDomainGraph.class);
+
 	private int[] ids;
-	private int lastId = -1;
-	private int lastFromId = -1;
-	private int lastToId = -1;
-	String lastDomain = "";
-	
+	protected long lastId = -1;
+	protected long lastFromId = -1;
+	protected long lastToId = -1;
+	protected String lastDomain = "";
+
 	private static Pattern SPLIT_HOST_PATTERN = Pattern.compile("\\.");
-	
+
+	private HostToDomainGraph() {
+	}
+
 	public HostToDomainGraph(int maxSize) {
 		ids = new int[maxSize];
 	}
@@ -51,37 +61,45 @@ public class HostToDomainGraph {
 		return String.join(".", rev);
 	}
 
+	protected void setValue(long id, long value) {
+		ids[(int) id] = (int) value;
+	}
+
+	protected long getValue(long id) {
+		return ids[(int) id];
+	}
+
 	public String convertNode(String line) {
 		int sep = line.indexOf('\t');
 		if (sep == -1) {
 			return "";
 		}
-		int id = Integer.parseInt(line.substring(0, sep));
+		long id = Long.parseLong(line.substring(0, sep));
 		String revHost = line.substring(sep+1);
 		String host = reverseHost(revHost);
-		String domain = EffectiveTldFinder.getAssignedDomain(host, true);
+		String domain = EffectiveTldFinder.getAssignedDomain(host, true, true);
 		if (domain == null) {
-			ids[id] = -1;
+			setValue(id, -1);
 			return null;
 		} else if (domain.equals(lastDomain)) {
-			ids[id] = lastId;
+			setValue(id, lastId);
 			return null;
 		}
 		lastId++;
-		ids[id] = lastId;
+		setValue(id, lastId);
 		lastDomain = domain;
 		return lastId + "\t" + reverseHost(domain);
 	}
-	
+
 	public String convertEdge(String line) {
 		int sep = line.indexOf('\t');
 		if (sep == -1) {
 			return "";
 		}
-		int fromId = Integer.parseInt(line.substring(0, sep));
-		int toId = Integer.parseInt(line.substring(sep+1));
-		fromId = ids[fromId];
-		toId = ids[toId];
+		long fromId = Long.parseLong(line.substring(0, sep));
+		long toId = Long.parseLong(line.substring(sep+1));
+		fromId = getValue(fromId);
+		toId = getValue(toId);
 		if (fromId == toId || fromId == -1 || toId == -1
 				|| (lastFromId == fromId && lastToId == toId)) {
 			return null;
@@ -95,26 +113,49 @@ public class HostToDomainGraph {
         in.map(func).filter(Objects::nonNull).forEach(out::println);
 	}
 
+	public static class HostToDomainGraphBig extends HostToDomainGraph {
+
+		private long[][] ids;
+
+		public HostToDomainGraphBig(long maxSize) {
+			ids = LongBigArrays.newBigArray(maxSize);
+		}
+
+		protected void setValue(long id, long value) {
+			LongBigArrays.set(ids, id, value);
+		}
+
+		protected long getValue(long id) {
+			return LongBigArrays.get(ids, id);
+		}
+	}
+
 	public static void main(String[] args) {
 		if (args.length != 5) {
-			System.err.println("HostToDomainGraph <maxSize> <nodes_in> <edges_in> <nodes_out> <edges_out>");
+			LOG.error("HostToDomainGraph <maxSize> <nodes_in> <nodes_out> <edges_in> <edges_out>");
 			System.exit(1);
 		}
-		int maxSize = 0;
+		long maxSize = 0;
 		try {
-			maxSize = Integer.parseInt(args[0]); 
+			maxSize = Long.parseLong(args[0]);
 		} catch (NumberFormatException e) {
-			System.err.println("Invalid number: " + args[0]);
+			LOG.error("Invalid number: " + args[0]);
 			System.exit(1);
 		}
-		HostToDomainGraph converter = new HostToDomainGraph(maxSize);
+		HostToDomainGraph converter;
+		if (maxSize <= Arrays.MAX_ARRAY_SIZE) {
+			converter = new HostToDomainGraph((int) maxSize);
+		} else {
+			converter = new HostToDomainGraphBig(maxSize);
+		}
 		String nodesIn = args[1];
 		String nodesOut = args[2];
 		try (Stream<String> in = Files.lines(Paths.get(nodesIn));
 				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(nodesOut)))) {
 			converter.convert(converter::convertNode, in, out);
+			LOG.info("Finished conversion of nodes/vertices");
 		} catch (IOException e) {
-			System.err.println("Failed to read nodes from " + nodesIn);
+			LOG.error("Failed to read nodes from " + nodesIn);
 			System.exit(1);
 		}
 		String edgesIn = args[3];
@@ -122,8 +163,9 @@ public class HostToDomainGraph {
 		try (Stream<String> in = Files.lines(Paths.get(edgesIn));
 				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(edgesOut)))) {
 			converter.convert(converter::convertEdge, in, out);
+			LOG.info("Finished conversion of edges");
 		} catch (IOException e) {
-			System.err.println("Failed to read edges from " + edgesIn);
+			LOG.error("Failed to read edges from " + edgesIn);
 			System.exit(1);
 		}
 	}
