@@ -132,7 +132,7 @@ public class HostToDomainGraph {
 
 	public static void main(String[] args) {
 		if (args.length != 5) {
-			LOG.error("HostToDomainGraph <maxSize> <nodes_in> <nodes_out> <edges_in> <edges_out>");
+			System.err.println("HostToDomainGraph <maxSize> <nodes_in> <nodes_out> <edges_in> <edges_out>");
 			System.exit(1);
 		}
 		long maxSize = 0;
