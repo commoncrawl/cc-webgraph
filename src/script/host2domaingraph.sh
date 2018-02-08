@@ -10,6 +10,10 @@ INPUTDIR="$2"
 OUTPUTDIR="$3"
 TMPDIR=${4:-./tmp/}
 
+MAIN_MEM_GB=16
+PARALLEL_SORT_THREADS=2
+#CMPRS_TMP=false
+
 # Reduce host-level web graph to domain-level graph
 # - running HostToDomainGraph which has low memory requirements
 # - requires properly sorted input:
@@ -44,20 +48,53 @@ TMPDIR=${4:-./tmp/}
 export LC_ALL=C
 
 # sort with large buffers, merge sort over many files if possible
-SORTOPTS="--batch-size 128 --buffer-size 32g --parallel=16 --temporary-directory $TMPDIR --compress-program=gzip"
+SORTOPTS="--batch-size 128 --buffer-size $((1+$MAIN_MEM_GB/3))g --parallel=$PARALLEL_SORT_THREADS --temporary-directory $TMPDIR --compress-program=gzip"
 
 set -exo pipefail
 
 test -d $TMPDIR || mkdir $TMPDIR
 
-mkdir -p $OUTPUTDIR/domain
 
-java -Xmx60g -cp target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
+_EDGES=$INPUTDIR/edges.txt.gz
+if ! [ -e $_EDGES ] && [ -d $INPUTDIR/edges/ ]; then
+    # edges is a directory with multiple edges files
+    _EDGES="$INPUTDIR/edges/*.gz"
+else
+    echo "Input edges file(s) not found"
+    exit 1
+fi
+
+if ! [ -e $INPUTDIR/vertices-sortdomain.txt.gz ]; then
+
+    _VERTICES=$INPUTDIR/vertices.txt.gz
+    if ! [ -e $_VERTICES ] && [ -d $INPUTDIR/vertices/ ]; then
+        # vertices is a directory with multiple vertices files
+        _VERTICES="$INPUTDIR/vertices/*.gz"
+    else
+        echo "Input vertices file(s) not found"
+        exit 1
+    fi
+
+    zcat $_VERTICES | sed -e 's/$/./' \
+        | sort $SORTOPTS -t$'\t' -k2,2 | sed -e 's/\.$//' \
+        | gzip >$INPUTDIR/vertices-sortdomain.txt.gz
+fi
+
+
+mkdir -p $OUTPUTDIR/
+
+JXMX=$((2+1+4*$SIZE/2**30))
+if [ "$SIZE" -gt $((2**31-1024)) ]; then
+    JXMX=$((8+1+10*$SIZE/2**30))
+fi
+
+java -Xmx${JXMX}g -cp target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
      org.commoncrawl.webgraph.HostToDomainGraph \
+     -c \
      $SIZE \
-     <(zcat $INPUTDIR/vertices/part-*.gz | sed -e 's/$/./' | sort $SORTOPTS -t$'\t' -k2,2 | sed -e 's/\.$//') \
-     >(gzip >$OUTPUTDIR/domain/vertices.txt.gz) \
-     <(zcat $INPUTDIR/edges/part-*.gz) \
-     >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >$OUTPUTDIR/domain/edges.txt.gz)
+     <(zcat $INPUTDIR/vertices-sortdomain.txt.gz) \
+     >(gzip >$OUTPUTDIR/vertices.txt.gz) \
+     <(zcat $_EDGES) \
+     >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >$OUTPUTDIR/edges.txt.gz)
 
 

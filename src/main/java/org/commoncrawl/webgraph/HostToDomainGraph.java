@@ -36,10 +36,13 @@ public class HostToDomainGraph {
 
 	protected static Logger LOG = LoggerFactory.getLogger(HostToDomainGraph.class);
 
+	protected boolean countHosts = false;
+
 	private int[] ids;
 	protected long lastId = -1;
 	protected long lastFromId = -1;
 	protected long lastToId = -1;
+	protected long numberOfHosts = 0;
 	protected String lastDomain = "";
 
 	private static Pattern SPLIT_HOST_PATTERN = Pattern.compile("\\.");
@@ -49,6 +52,10 @@ public class HostToDomainGraph {
 
 	public HostToDomainGraph(int maxSize) {
 		ids = new int[maxSize];
+	}
+
+	public void doCount(boolean countHosts) {
+		this.countHosts = countHosts;
 	}
 
 	public static String reverseHost(String revHost) {
@@ -81,14 +88,32 @@ public class HostToDomainGraph {
 		if (domain == null) {
 			setValue(id, -1);
 			return null;
-		} else if (domain.equals(lastDomain)) {
+		} else if (lastDomain != null && domain.equals(lastDomain)) {
 			setValue(id, lastId);
+			numberOfHosts++;
 			return null;
 		}
+		String res = getNodeLine();
+		numberOfHosts = 1;
 		lastId++;
 		setValue(id, lastId);
 		lastDomain = domain;
-		return lastId + "\t" + reverseHost(domain);
+		return res;
+	}
+
+	private String getNodeLine() {
+		if (lastId >= 0 && lastDomain != null) {
+			StringBuilder b = new StringBuilder();
+			b.append(lastId);
+			b.append('\t');
+			b.append(reverseHost(lastDomain));
+			if (countHosts) {
+				b.append('\t');
+				b.append(numberOfHosts);
+			}
+			return b.toString();
+		}
+		return null;
 	}
 
 	public String convertEdge(String line) {
@@ -113,6 +138,13 @@ public class HostToDomainGraph {
         in.map(func).filter(Objects::nonNull).forEach(out::println);
 	}
 
+	private void finishNodes(PrintStream out) {
+		String lastLine = getNodeLine();
+		if (lastLine != null) {
+			out.println(lastLine);
+		}
+	}
+
 	public static class HostToDomainGraphBig extends HostToDomainGraph {
 
 		private long[][] ids;
@@ -130,16 +162,36 @@ public class HostToDomainGraph {
 		}
 	}
 
+	private static void showHelp() {
+		System.err.println("HostToDomainGraph [-c] <maxSize> <nodes_in> <nodes_out> <edges_in> <edges_out>");
+		System.err.println("Options:");
+		System.err.println(" -c\tcount hosts per domain (additional column in <nodes_out>");
+	}
+
 	public static void main(String[] args) {
-		if (args.length != 5) {
-			System.err.println("HostToDomainGraph <maxSize> <nodes_in> <nodes_out> <edges_in> <edges_out>");
+		if (args.length < 5) {
+			showHelp();
 			System.exit(1);
+		}
+		boolean countHosts = false;
+		int argpos = 0;
+		while (args[argpos].startsWith("-")) {
+			switch (args[argpos]) {
+			case "-c":
+				countHosts = true;
+				break;
+			default:
+				System.err.println("Unknown option " + args[argpos]);
+				showHelp();
+				System.exit(1);
+			}
+			argpos++;
 		}
 		long maxSize = 0;
 		try {
-			maxSize = Long.parseLong(args[0]);
+			maxSize = Long.parseLong(args[argpos+0]);
 		} catch (NumberFormatException e) {
-			LOG.error("Invalid number: " + args[0]);
+			LOG.error("Invalid number: " + args[argpos+0]);
 			System.exit(1);
 		}
 		// exclude private domains / suffixes
@@ -150,18 +202,20 @@ public class HostToDomainGraph {
 		} else {
 			converter = new HostToDomainGraphBig(maxSize);
 		}
-		String nodesIn = args[1];
-		String nodesOut = args[2];
+		converter.doCount(countHosts);
+		String nodesIn = args[argpos+1];
+		String nodesOut = args[argpos+2];
 		try (Stream<String> in = Files.lines(Paths.get(nodesIn));
 				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(nodesOut)))) {
 			converter.convert(converter::convertNode, in, out);
+			converter.finishNodes(out);
 			LOG.info("Finished conversion of nodes/vertices");
 		} catch (IOException e) {
 			LOG.error("Failed to read nodes from " + nodesIn);
 			System.exit(1);
 		}
-		String edgesIn = args[3];
-		String edgesOut = args[4];
+		String edgesIn = args[argpos+3];
+		String edgesOut = args[argpos+4];
 		try (Stream<String> in = Files.lines(Paths.get(edgesIn));
 				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(edgesOut)))) {
 			converter.convert(converter::convertEdge, in, out);
@@ -171,4 +225,5 @@ public class HostToDomainGraph {
 			System.exit(1);
 		}
 	}
+
 }
