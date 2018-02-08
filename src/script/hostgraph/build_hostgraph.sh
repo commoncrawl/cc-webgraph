@@ -184,7 +184,7 @@ for CRAWL in ${CRAWLS[@]}; do
               --executor-cores $EXECUTOR_CORES \
               --executor-memory $EXECUTOR_MEM \
               --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR/$CRAWL \
-              --conf "spark.sql.parquet.compression.codec=gzip" \
+              --conf spark.sql.parquet.compression.codec=gzip \
               --py-files sparkcc.py \
               ./wat_extract_links.py \
               --num_input_partitions $INPUT_PARTITIONS \
@@ -239,7 +239,7 @@ for CRAWL in ${CRAWLS[@]}; do
               --executor-cores $EXECUTOR_CORES \
               --executor-memory $EXECUTOR_MEM \
               --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR/$CRAWL \
-              --conf "spark.sql.parquet.compression.codec=gzip" \
+              --conf spark.sql.parquet.compression.codec=gzip \
               ./hostlinks_to_graph.py \
               --validate_host_names \
               --save_as_text $HDFS_BASE_DIR/text/$CRAWL \
@@ -290,7 +290,7 @@ if [ -n "$MERGE_INPUT" ] || [ -n "MERGE_NAME" ]; then
         --executor-cores $EXECUTOR_CORES \
         --executor-memory $EXECUTOR_MEM \
         --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR \
-        --conf "spark.sql.parquet.compression.codec=gzip" \
+        --conf spark.sql.parquet.compression.codec=gzip \
         ./hostlinks_to_graph.py \
         --validate_host_names \
         --save_as_text $HDFS_BASE_DIR/text/$MERGE_NAME \

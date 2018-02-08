@@ -5,7 +5,7 @@
 #  http://law.di.unimi.it/software.php
 WEBGRAPH_VERSION=3.6.1
 WEBGRAPH_BIG_VERSION=3.5.0
-LAW_VERSION=2.4
+LAW_VERSION=2.5
 
 # for big graphs with more than 2^31 nodes/vertices
 USE_WEBGRAPH_BIG=${USE_WEBGRAPH_BIG:-false}
@@ -13,6 +13,8 @@ USE_WEBGRAPH_BIG=${USE_WEBGRAPH_BIG:-false}
 
 # number of threads and Hyperball registers
 # depend on the size of the machine (here EC2 instance)
+# ... and of the graph to be processed
+# => it's only an empirical value and possibly needs to be adjusted
 THREADS=2
 HYP_REG=4
 ## on m2.4xlarge

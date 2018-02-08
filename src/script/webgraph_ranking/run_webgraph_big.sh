@@ -2,17 +2,16 @@
 
 export LC_ALL=C
 
-VERSION=3.5.0
+source "$(dirname $0)"/webgraph_config.sh
 
-DIR=$(dirname $0)/webgraph-big-$VERSION
+DIR=$(dirname $0)/webgraph-big-$WEBGRAPH_BIG_VERSION
 
-CLASSPATH=$DIR/webgraph-big-$VERSION.jar:$(ls $DIR/deps/*.jar | tr '\n' ':')
+CLASSPATH=$DIR/webgraph-big-$WEBGRAPH_BIG_VERSION.jar:$(ls $DIR/deps/*.jar | tr '\n' ':')
 
 # heuristics to run webgraph with 80% of available RAM (or all RAM - 8 GB if this is larger)
 MEMMB=$(free -m | perl -ne 'do { $p80 = int($1*.8); $a8 = int($1-8192); $m = $p80; $m = $a8 if $a8 > $p80; print $m; last } if /(\d+)/')
 JAVA_OPTS=-Xmx${MEMMB}m
 
-THREADS=${THREADS:-2}
 
 case "$1" in
     it.unimi.dsi.big.webgraph.algo.HyperBall )
