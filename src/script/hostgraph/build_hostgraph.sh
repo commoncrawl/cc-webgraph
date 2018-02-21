@@ -260,12 +260,12 @@ done # CRAWLS
 
 
 
-if [ -n "$MERGE_INPUT" ] || [ -n "MERGE_NAME" ]; then
+if [ -n "MERGE_NAME" ]; then
 
     hadoop fs -mkdir -p $HDFS_BASE_DIR/text/$MERGE_NAME
 
     for INP in "${MERGE_INPUT[@]}"; do
-        MERGE_CRAWL_INPUT="--add_input $INP $HOSTGRAPH_INPUT"
+        MERGE_CRAWL_INPUT="--add_input $INP $MERGE_CRAWL_INPUT"
     done
 
     VERTEX_IDS=""
@@ -309,5 +309,10 @@ if [ -n "$MERGE_INPUT" ] || [ -n "MERGE_NAME" ]; then
     ### merge (one file for vertices, one for edges) and upload
     # _step hostgraph_merged.upload.2 \
     #       dump_upload_text $MERGE_NAME $MERGE_NAME
+
+elif [ -n "$MERGE_INPUT" ]; then
+
+    echo "MERGE_INPUT is defined, but no MERGE_NAME given?"
+    exit 1
 
 fi
