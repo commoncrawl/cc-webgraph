@@ -84,7 +84,7 @@ public class HostToDomainGraph {
 		long id = Long.parseLong(line.substring(0, sep));
 		String revHost = line.substring(sep+1);
 		String host = reverseHost(revHost);
-		String domain = EffectiveTldFinder.getAssignedDomain(host, true);
+		String domain = EffectiveTldFinder.getAssignedDomain(host, true, true);
 		if (domain == null) {
 			setValue(id, -1);
 			return null;
@@ -194,8 +194,6 @@ public class HostToDomainGraph {
 			LOG.error("Invalid number: " + args[argpos+0]);
 			System.exit(1);
 		}
-		// exclude private domains / suffixes
-		EffectiveTldFinder.getInstance().initialize(true);
 		HostToDomainGraph converter;
 		if (maxSize <= Arrays.MAX_ARRAY_SIZE) {
 			converter = new HostToDomainGraph((int) maxSize);
