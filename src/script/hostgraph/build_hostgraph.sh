@@ -265,7 +265,11 @@ if [ -n "MERGE_NAME" ]; then
     hadoop fs -mkdir -p $HDFS_BASE_DIR/text/$MERGE_NAME
 
     for INP in "${MERGE_INPUT[@]}"; do
-        MERGE_CRAWL_INPUT="--add_input $INP $MERGE_CRAWL_INPUT"
+        if [ -z "$MERGE_CRAWL_INPUT" ]; then
+            MERGE_CRAWL_INPUT="$INP"
+        else
+            MERGE_CRAWL_INPUT="--add_input $INP $MERGE_CRAWL_INPUT"
+        fi
     done
 
     VERTEX_IDS=""
