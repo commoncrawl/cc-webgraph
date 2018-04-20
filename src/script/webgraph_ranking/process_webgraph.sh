@@ -16,7 +16,7 @@ fi
 FULLNAME="$OUTPUTDIR/$NAME"
 
 if [ -d "$OUTPUTDIR" ]; then
-	# TODO: OUTPUTDIR must not contain whitespace, '/', etc.
+    # TODO: OUTPUTDIR must not contain whitespace, '/', etc.
     echo "Output directory $OUTPUTDIR/ exists"
     # exit 1
 else
@@ -34,11 +34,24 @@ source $BIN/../workflow_lib.sh
 source $BIN/webgraph_config.sh
 
 
+if ! ${USE_WEBGRAPH_BIG:-false} && [ $GRAPH_SIZE_NODES -gt $((0x7ffffff7)) ]; then
+    echo "Graph has more nodes than max. array size in Java"
+    echo "Using big version of webgraph framework"
+    USE_WEBGRAPH_BIG=true
+fi
 if ${USE_WEBGRAPH_BIG:-false}; then
     WG=$WB
     WGP=it.unimi.dsi.big.webgraph
 else
     WGP=it.unimi.dsi.webgraph
+fi
+
+CC_WEBGRAPH_JAR=${CC_WEBGRAPH_JAR:-target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar}
+if $JOIN_RANKS_IN_MEMORY && ! [ -e $CC_WEBGRAPH_JAR ]; then
+    echo "Jar file $CC_WEBGRAPH_JAR not found"
+    echo "Java project needs to be build by running"
+    echo "  mvn package"
+    exit 1
 fi
 
 # logging
@@ -69,38 +82,74 @@ function join_rank() (
 
     if [ -d $_VERT ]; then
         # _VERT is a directory with multiple vertices files
-        _VERT="$_VERT/*.gz"
+        _VERT="${_VERT}/*.gz"
     fi
 
     ### unpack scores with LAW, join node names via paste,
     ### assign ranks on sorted lines by nl
-	$LW it.unimi.dsi.law.io.tool.DataInput2Text --type $_DATA_TYPE $_IN - \
+    $LW it.unimi.dsi.law.io.tool.DataInput2Text --type $_DATA_TYPE $_IN - \
         | paste - <(zcat $_VERT | cut -f2$_EXTRA_FIELDS) \
         | sort --parallel $SORT_THREADS --batch-size $(($SORT_THREADS*4)) --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip -t$'\t' -k1,1gr --stable \
         | nl -w1 -nln \
         | gzip >$_OUT
 )
 
-function join_harmonicc_pagerank() {
+function join_harmonicc_pagerank() (
+    set -exo pipefail
     NAME="$1"
     _IN_HC="$2"
     _IN_PR="$3"
     _OUT="$4"
     _EXTRA_FIELDS=""
+    HEADER="#harmonicc_pos\t#harmonicc_val\t#pr_pos\t#pr_val\t#host_rev"
     if [ -n "$5" ]; then
         _EXTRA_FIELDS=",$5"
-        _EXTRA_FIELDS_HEADER="\t$6"
+        HEADER="$HEADER\t$6"
     fi
     SORTOPTS="--parallel=$SORT_THREADS --batch-size=$(($SORT_THREADS*4)) --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
-    (echo -e "#harmonicc_pos\t#harmonicc_val\t#pr_pos\t#pr_val\t#host_rev$_EXTRA_FIELDS_HEADER";
+    (echo -e "$HEADER";target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar
      zcat $_IN_HC | sort $SORTOPTS -t$'\t' -k3,3 --unique --stable \
          | join -a1 -a2 -e'---' -t$'\t' -j3 -o1.1,1.2,2.1,2.2,0$_EXTRA_FIELDS - \
                 <(zcat $_IN_PR | sort $SORTOPTS -t$'\t' -k3,3 --unique --stable) \
          | sort $SORTOPTS -t$'\t' -k1,1n -s) \
      | gzip >$_OUT
-}
+)
 
-function connected_distrib() {
+function join_ranks_in_memory() (
+    set -exo pipefail
+    _VERT="$1"
+    _HC="$2"
+    _PR="$3"
+    _OUT="$4"
+    HEADER="#harmonicc_pos\t#harmonicc_val\t#pr_pos\t#pr_val\t#host_rev"
+    if [ -n "$5" ]; then
+        HEADER="${HEADER}\t$5"
+    fi
+    if [ -d $_VERT ]; then
+        # _VERT is a directory with multiple vertices files
+        _VERT="$_VERT/*.gz"
+    fi
+    BYTES_MEM_REQUIRED=24
+    OPTS=""
+    if $USE_WEBGRAPH_BIG; then
+        OPTS="--big"
+        BYTES_MEM_REQUIRED=36
+    fi
+    BYTES_MEM_REQUIRED=$(($BYTES_MEM_REQUIRED*$GRAPH_SIZE_NODES))
+    JAVA_HEAP_GB=$((($BYTES_MEM_REQUIRED/2**30)+1))
+    JAVAOPTS="-Xmx${JAVA_HEAP_GB}g"
+    SORTOPTS="--parallel=$SORT_THREADS --batch-size=$(($SORT_THREADS*4)) --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
+    JAVACLASSPATH=$CC_WEBGRAPH_JAR
+    if [ -n "$CLASSPATH" ]; then
+        JAVACLASSPATH="$JAVACLASSPATH:$CLASSPATH"
+    fi
+    (echo -e "$HEADER";
+     java $JAVAOPTS -cp $JAVACLASSPATH org.commoncrawl.webgraph.JoinSortRanks <(zcat $_VERT) $_HC $_PR -) \
+      | sort $SORTOPTS -t$'\t' -k1,1n --stable | gzip >$_OUT
+)
+
+function connected_distrib() (
+    set -exo pipefail
     NUM_NODES=$1
     INPUT=$2
     OUTPUT=$3
@@ -109,15 +158,16 @@ function connected_distrib() {
      $LW it.unimi.dsi.law.io.tool.DataInput2Text --type int $INPUT - | sort $SORTOPTS -nr | uniq -c \
          | perl -lpe 'if ($. <= 10) { /(\d+)$/; $_ .= sprintf("\t%2.2f%%", 100*$1/'$NUM_NODES') }') \
         | gzip >$OUTPUT
-}
+)
 
-function degree_distrib() {
+function degree_distrib() (
+    set -exo pipefail
     TYPE="$1"
     NAME="$2"
     (echo -e "#arcs\t#nodes";
      perl -lne 'print sprintf("%d\t%s", ($.-1), $_) if $_ ne 0' $NAME.$TYPE) \
         | gzip >$FULLNAME-$TYPE-distrib.txt.gz
-}
+)
 
 
 
@@ -160,13 +210,13 @@ else
     fi
 fi
 
-# if low memory, add
-# --offline, combined with
-# -Djava.io.tmpdir=... to point to a temporary directory with free space 2 times the graph size
 if ${USE_WEBGRAPH_BIG:-false}; then
     _step transpose \
           $WG $WGP.Transform transposeOffline $FULLNAME $FULLNAME-t
 else
+    # if low memory, add
+    # --offline, combined with
+    # -Djava.io.tmpdir=... to point to a temporary directory with free space 2 times the graph size
     _step transpose \
           $WG $WGP.Transform transpose $FULLNAME $FULLNAME-t
 fi
@@ -187,39 +237,49 @@ fi
 
 _step_bg connected 15 \
          $WG $WGP.algo.ConnectedComponents --threads $THREADS -m --renumber --sizes -t $FULLNAME-t $FULLNAME
+connected_pid=$!
 _step_bg strongly-connected 15 \
          $WG $WGP.algo.StronglyConnectedComponents --renumber --sizes $FULLNAME
+strongly_connected_pid=$!
 
 EXTRA_FIELDS=""
 EXTRA_FIELDS_JOIN=""
+EXTRA_FIELDS_HEADER=""
 if [ $VERTICES_FIELDS -gt 2 ]; then
     EXTRA_FIELDS="3-$VERTICES_FIELDS"
     EXTRA_FIELDS_JOIN="1.4"
+    EXTRA_FIELDS_HEADER="#n_hosts"
     for i in $(seq 4 $VERTICES_FIELDS); do
         EXTRA_FIELDS_JOIN="${EXTRA_FIELDS_JOIN},1.$(($i+1))"
     done
 fi
-_step_bg join_harmonicc 15 \
-         join_rank float $FULLNAME-harmonicc.bin $VERTICES $FULLNAME-harmonic-centrality.txt.gz "$EXTRA_FIELDS"
-_step_bg join_pr_gs 15 \
-         join_rank double $FULLNAME-pagerank.ranks $VERTICES $FULLNAME-pagerank.txt.gz
 
-wait # until background processes are finished
-
-# join ranks into one file
-_step_bg join_harmonicc_pagerank 60 \
-         join_harmonicc_pagerank $NAME $FULLNAME-harmonic-centrality.txt.gz $FULLNAME-pagerank.txt.gz $FULLNAME-ranks.txt.gz "$EXTRA_FIELDS_JOIN" "#n_hosts"
+if ${JOIN_RANKS_IN_MEMORY}; then
+    _step_bg join_ranks 15 \
+             join_ranks_in_memory $VERTICES $FULLNAME-harmonicc.bin $FULLNAME-pagerank.ranks $FULLNAME-ranks.txt.gz "$EXTRA_FIELDS_HEADER"
+else
+    _step_bg join_harmonicc 15 \
+             join_rank float $FULLNAME-harmonicc.bin $VERTICES $FULLNAME-harmonic-centrality.txt.gz "$EXTRA_FIELDS"
+    _step_bg join_pr_gs 15 \
+             join_rank double $FULLNAME-pagerank.ranks $VERTICES $FULLNAME-pagerank.txt.gz
+    wait # until background processes are finished
+    # join ranks into one file
+    _step_bg join_harmonicc_pagerank 60 \
+             join_harmonicc_pagerank $NAME $FULLNAME-harmonic-centrality.txt.gz $FULLNAME-pagerank.txt.gz $FULLNAME-ranks.txt.gz "$EXTRA_FIELDS_JOIN" "$EXTRA_FIELDS_HEADER"
+fi
 
 # stats use connected components files, wait for these to be finished
+wait $connected_pid
+wait $strongly_connected_pid
 _step stats \
          $WG $WGP.Stats --save-degrees $FULLNAME
 
 NODES=$(perl -lne 'print if s@^nodes=@@' $FULLNAME.stats)
 _step connected_distrib \
       connected_distrib $NODES $FULLNAME.wccsizes $FULLNAME-connected-components-distrib.txt.gz
-# TODO: should use *.sccdistr
 _step strongly_connected_distrib \
       connected_distrib $NODES $FULLNAME.sccsizes $FULLNAME-strongly-connected-components-distrib.txt.gz
+# it.unimi.dsi.webgraph.Stats writes similar *.sccdistr (but there is now *.wccdistr)
 
 _step indegree_distrib \
       degree_distrib indegree $FULLNAME outdegree_distrib \

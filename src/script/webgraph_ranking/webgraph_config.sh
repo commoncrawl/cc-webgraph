@@ -7,8 +7,15 @@ WEBGRAPH_VERSION=3.6.1
 WEBGRAPH_BIG_VERSION=3.5.0
 LAW_VERSION=2.5
 
+# size of the graph (default: 64 million nodes)
+# - no exact size is needed, just to estimate the required Java heap space
+GRAPH_SIZE_NODES=${GRAPH_SIZE:-67108864}
+
 # for big graphs with more than 2^31 nodes/vertices
 USE_WEBGRAPH_BIG=${USE_WEBGRAPH_BIG:-false}
+
+# join node names and ranks in memory
+JOIN_RANKS_IN_MEMORY=${JOIN_RANKS_IN_MEMORY:-true}
 
 
 # number of threads and Hyperball registers
