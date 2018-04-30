@@ -56,9 +56,12 @@ test -d $TMPDIR || mkdir $TMPDIR
 
 
 _EDGES=$INPUTDIR/edges.txt.gz
-if ! [ -e $_EDGES ] && [ -d $INPUTDIR/edges/ ]; then
+if [ -e $_EDGES ]; then
+    echo "Found single edges file: $_EDGES"
+elif [ -d $INPUTDIR/edges/ ]; then
     # edges is a directory with multiple edges files
     _EDGES="$INPUTDIR/edges/*.gz"
+    echo "Found edges directory, using: $_EDGES"
 else
     echo "Input edges file(s) not found"
     exit 1
@@ -67,8 +70,11 @@ fi
 if ! [ -e $INPUTDIR/vertices-sortdomain.txt.gz ]; then
 
     _VERTICES=$INPUTDIR/vertices.txt.gz
-    if ! [ -e $_VERTICES ] && [ -d $INPUTDIR/vertices/ ]; then
+    if [ -e $_VERTICES ]; then
+        echo "Found single vertices file: $_VERTICES"
+    elif [ -d $INPUTDIR/vertices/ ]; then
         # vertices is a directory with multiple vertices files
+        echo "Found vertices directory, using: $_VERTICES"
         _VERTICES="$INPUTDIR/vertices/*.gz"
     else
         echo "Input vertices file(s) not found"
