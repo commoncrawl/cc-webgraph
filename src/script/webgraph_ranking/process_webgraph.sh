@@ -60,14 +60,6 @@ LOGDIR=$OUTPUTDIR/logs
 # file to stop workflow
 STOP_FILE_=$LOGDIR/$(basename $0 .sh).stop
 
-VERTICES_FIELDS=${VERTICES_FIELDS:-2}
-
-# threads and buffer size used for sorting
-export SORT_THREADS=$((($THREADS > 4) ? ($THREADS/2) : 2))
-# take 10% of main memory, at least 1 GB, for sort "chunks"
-export SORT_BUFFER_SIZE=$(free -g | perl -ne 'do { print 1+int($1*.1), "g"; last } if /(\d+)/')
-
-
 function join_rank() (
     set -exo pipefail
     _DATA_TYPE=$1
@@ -89,7 +81,7 @@ function join_rank() (
     ### assign ranks on sorted lines by nl
     $LW it.unimi.dsi.law.io.tool.DataInput2Text --type $_DATA_TYPE $_IN - \
         | paste - <(zcat $_VERT | cut -f2$_EXTRA_FIELDS) \
-        | sort --parallel $SORT_THREADS --batch-size $(($SORT_THREADS*4)) --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip -t$'\t' -k1,1gr --stable \
+        | sort --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip -t$'\t' -k1,1gr --stable \
         | nl -w1 -nln \
         | gzip >$_OUT
 )
@@ -106,7 +98,7 @@ function join_harmonicc_pagerank() (
         _EXTRA_FIELDS=",$5"
         HEADER="$HEADER\t$6"
     fi
-    SORTOPTS="--parallel=$SORT_THREADS --batch-size=$(($SORT_THREADS*4)) --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
+    SORTOPTS="$SORT_PARALLEL_THREADS_OPT --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
     (echo -e "$HEADER";target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar
      zcat $_IN_HC | sort $SORTOPTS -t$'\t' -k3,3 --unique --stable \
          | join -a1 -a2 -e'---' -t$'\t' -j3 -o1.1,1.2,2.1,2.2,0$_EXTRA_FIELDS - \
@@ -129,22 +121,24 @@ function join_ranks_in_memory() (
         # _VERT is a directory with multiple vertices files
         _VERT="$_VERT/*.gz"
     fi
-    BYTES_MEM_REQUIRED=24
     OPTS=""
+    # heuristics to set Java heap memory
+    # bytes required per node (in theory, 60% more in practice)
+    BYTES_MEM_REQUIRED=24
     if $USE_WEBGRAPH_BIG; then
         OPTS="--big"
         BYTES_MEM_REQUIRED=36
     fi
-    BYTES_MEM_REQUIRED=$(($BYTES_MEM_REQUIRED*$GRAPH_SIZE_NODES))
+    BYTES_MEM_REQUIRED=$(($BYTES_MEM_REQUIRED*$GRAPH_SIZE_NODES*16/10))
     JAVA_HEAP_GB=$((($BYTES_MEM_REQUIRED/2**30)+1))
     JAVAOPTS="-Xmx${JAVA_HEAP_GB}g"
-    SORTOPTS="--parallel=$SORT_THREADS --batch-size=$(($SORT_THREADS*4)) --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
+    SORTOPTS="$SORT_PARALLEL_THREADS_OPT --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
     JAVACLASSPATH=$CC_WEBGRAPH_JAR
     if [ -n "$CLASSPATH" ]; then
         JAVACLASSPATH="$JAVACLASSPATH:$CLASSPATH"
     fi
     (echo -e "$HEADER";
-     java $JAVAOPTS -cp $JAVACLASSPATH org.commoncrawl.webgraph.JoinSortRanks <(zcat $_VERT) $_HC $_PR -) \
+     java $JAVAOPTS -cp $JAVACLASSPATH org.commoncrawl.webgraph.JoinSortRanks $OPTS <(zcat $_VERT) $_HC $_PR -) \
       | sort $SORTOPTS -t$'\t' -k1,1n --stable | gzip >$_OUT
 )
 
@@ -153,7 +147,7 @@ function connected_distrib() (
     NUM_NODES=$1
     INPUT=$2
     OUTPUT=$3
-    SORTOPTS="--parallel=$SORT_THREADS --batch-size=$(($SORT_THREADS*4)) --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
+    SORTOPTS="$SORT_PARALLEL_THREADS_OPT --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
     (echo -e "  #freq #size"; \
      $LW it.unimi.dsi.law.io.tool.DataInput2Text --type int $INPUT - | sort $SORTOPTS -nr | uniq -c \
          | perl -lpe 'if ($. <= 10) { /(\d+)$/; $_ .= sprintf("\t%2.2f%%", 100*$1/'$NUM_NODES') }') \
@@ -195,7 +189,7 @@ if [ -d $EDGES ]; then
             sort_input="$sort_input <(zcat $e)"
         done
         _step bvgraph \
-              bash -c "eval \"sort --batch-size 96 -t$'\t' -k1,1n -k2,2n --stable --merge $sort_input\" | $WG $WGP.BVGraph --once -g $WGP.ArcListASCIIGraph - $FULLNAME"
+              bash -c "eval \"sort --batch-size=$SORT_BATCHES -t$'\t' -k1,1n -k2,2n --stable --merge $sort_input\" | $WG $WGP.BVGraph --once -g $WGP.ArcListASCIIGraph - $FULLNAME"
     else
         _step bvgraph \
               $WG $WGP.BVGraph --threads $THREADS -g $WGP.ArcListASCIIGraph <(zcat $EDGES/*.gz) $FULLNAME
@@ -277,9 +271,9 @@ _step stats \
 NODES=$(perl -lne 'print if s@^nodes=@@' $FULLNAME.stats)
 _step connected_distrib \
       connected_distrib $NODES $FULLNAME.wccsizes $FULLNAME-connected-components-distrib.txt.gz
-_step strongly_connected_distrib \
-      connected_distrib $NODES $FULLNAME.sccsizes $FULLNAME-strongly-connected-components-distrib.txt.gz
-# it.unimi.dsi.webgraph.Stats writes similar *.sccdistr (but there is now *.wccdistr)
+# it.unimi.dsi.webgraph.Stats writes *.sccdistr (but there is now *.wccdistr)
+# _step strongly_connected_distrib \
+#       connected_distrib $NODES $FULLNAME.sccsizes $FULLNAME-strongly-connected-components-distrib.txt.gz
 
 _step indegree_distrib \
       degree_distrib indegree $FULLNAME outdegree_distrib \

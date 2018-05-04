@@ -28,8 +28,9 @@ import it.unimi.dsi.fastutil.longs.LongComparator;
  * node names.
  * 
  * Sorting and joining is done in memory. For a graph with <i>n</i> nodes, the
- * required memory is 24 * <i>n</i>, resp. 36 * <i>n</i> if <i>n</i> &gt;
- * {@link Arrays#MAX_ARRAY_SIZE}.
+ * required memory is 24 * <i>n</i> bytes, resp. 36 * <i>n</i> bytes if <i>n</i>
+ * &gt; {@link Arrays#MAX_ARRAY_SIZE}. In practice, the requirements are higher
+ * by about 50%.
  */
 public class JoinSortRanks {
 
@@ -301,10 +302,15 @@ public class JoinSortRanks {
 				ranksOutStream = Files.newOutputStream(Paths.get(ranksOut));
 			}
 			PrintStream out = new PrintStream(ranksOutStream);
+			LOG.info("Loading harmonic centrality values from {}", ranksHC);
 			converter.loadHarmonicCentrality(ranksHC);
+			LOG.info("Loading page rank values from {}", ranksPR);
 			converter.loadPageRank(ranksPR);
+			LOG.info("Assigning harmonic centrality ranks");
 			converter.assignHarmonicCentralityRank();
+			LOG.info("Assigning page rank ranks");
 			converter.assignPageRankRank();
+			LOG.info("Joining ranks");
 			converter.convert(converter::addRanks, in, out);
 			LOG.info("Finished joining ranks");
 		} catch (IOException e) {

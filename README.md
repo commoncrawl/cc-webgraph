@@ -21,13 +21,23 @@ The domain-level web graph is distilled from the host-level graph by mapping hos
 
 To analyze the graph structure and calculate rankings you may further process the graphs using software from the  Laboratory for Web Algorithmics (LAW) at the University of Milano, namely the [webgraph framework](http://webgraph.di.unimi.it/) and the [LAW library](http://law.di.unimi.it/software.php).
 
-A couple of scripts which may help you to install the webgraph framework and run the tools to build and process the graphs are provided in [src/script/webgraph_ranking/](src/script/webgraph_ranking/). They're also used to prepare the Common Crawl web graph releases. The first script installs the webgraph and LAW software in the current directory:
+A couple of scripts which may help you to install the webgraph framework and run the tools to build and process the graphs are provided in [src/script/webgraph_ranking/](src/script/webgraph_ranking/). They're also used to prepare the Common Crawl web graph releases. The first script installs the webgraph and LAW software in the same directory where the scripts are located:
 ```
-./src/script/webgraph_ranking/install_webgraph.sh
+cd ./src/script/webgraph_ranking/
+./install_webgraph.sh
+cd ../../../
 ```
 
-To process a webgraph and rank the nodes, you could just run
+To process a webgraph and rank the nodes, you should first adapt the configuration to your graph and hardware setup:
+```
+vi ./src/script/webgraph_ranking/webgraph_config.sh
+```
+After running
 ```
 ./src/script/webgraph_ranking/process_webgraph.sh graph_name vertices.txt.gz edges.txt.gz output_dir
 ```
-and `output_dir/` should contain generated files, eg. `graph_name.graph` and `graph_name-ranks.txt.gz`. It's a shell script easy to adapt to your needs. Please refer to the [LAW dataset tutorial](http://law.di.unimi.it/tutorial.php), the [API docs of LAW](http://law.di.unimi.it/software/law-docs/index.html) and [webgraph](http://webgraph.di.unimi.it/docs/) for further information.
+the `output_dir/` should contain all generated files, eg. `graph_name.graph` and `graph_name-ranks.txt.gz`.
+
+The shell script is easily adapted to your needs. Please refer to the [LAW dataset tutorial](http://law.di.unimi.it/tutorial.php), the [API docs of LAW](http://law.di.unimi.it/software/law-docs/index.html) and [webgraph](http://webgraph.di.unimi.it/docs/) for further information.
+
+
