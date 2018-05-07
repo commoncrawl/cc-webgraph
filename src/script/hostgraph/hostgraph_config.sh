@@ -39,10 +39,11 @@ MERGE_NAME=cc-main-2017-aug-sep-oct
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
 # - output directories of hostlinks jobs of prior crawls
-
-MERGE_INPUT=()  # ("s3a://.../hostlinks/0/" "s3a://.../hostlinks/1/" ...)
-# NOTE: ev. copy the data from s3:// to hdfs:// to avoid tasks
-#       taking long while reading from S3
+# - list of fully-qualified paths:
+#   ("s3a://.../hostlinks/0/" "s3a://.../hostlinks/1/" ...)
+# - ev. copy the data from s3:// to hdfs:// to avoid tasks
+#   taking long while reading from S3
+MERGE_INPUT=()
 
 
 ################################################################################
@@ -70,6 +71,9 @@ EXECUTOR_CONFIG="r3.8xlarge"
 #  - step 1 (host link extraction) can be run on smaller instances
 #  - webgraph construction (esp. for merged graphs) needs instances
 #    with sufficient amount of RAM
+#  - assigning IDs in multiple partitions
+#    (see hostlinks_to_graph.py --vertex_partitions)
+#    reduces the memory requirements significantly
 
 
 case "$EXECUTOR_CONFIG" in
@@ -107,6 +111,6 @@ case "$EXECUTOR_CONFIG" in
 esac
 
 OUTPUT_PARTITIONS=$(($NUM_EXECUTORS*$EXECUTOR_CORES/2))
-WEBGRAPH_EDGE_PARTITIONS=$(($NUM_EXECUTORS*$EXECUTOR_CORES/4))
+WEBGRAPH_EDGE_PARTITIONS=$(($NUM_EXECUTORS*$EXECUTOR_CORES/2))
 WEBGRAPH_VERTEX_PARTITIONS=$(($NUM_EXECUTORS*$EXECUTOR_CORES/4))
 DIVISOR_INPUT_PARTITIONS=5
