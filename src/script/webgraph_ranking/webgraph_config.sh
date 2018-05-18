@@ -52,7 +52,7 @@ VERTICES_FIELDS=${VERTICES_FIELDS:-2}
 # threads and buffer size used for sorting
 export SORT_PARALLEL_THREADS_OPT=""
 if echo -e "b\na\nc" | sort --parallel=2 >/dev/null; then
-    echo "The sort command supports parallel sort threads"
+    echo "The sort command supports parallel sort threads" >&2
     SORT_PARALLEL_THREADS_OPT="--parallel=$((($THREADS > 4) ? ($THREADS/2) : 2))"
 fi
 

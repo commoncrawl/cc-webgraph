@@ -259,18 +259,31 @@ public class JoinSortRanks {
 	}
 
 	private static void showHelp() {
-		System.err.println("JoinSortRanks [--big] <node_ids_names> <hc.bin> <pr.bin> <ranks_out>");
+		System.err.println("JoinSortRanks [--big] <vertices> <hc.bin> <pr.bin> <ranks_out>");
+		System.err.println("");
+		System.err.println("Assign ranks to harmonic centrality and page rank values,");
+		System.err.println("and join ranks with node names.");
+		System.err.println("");
 		System.err.println("Options:");
-		System.err.println(" ");
+		System.err.println(" --big\tgraphs are \"big\" (more than 2^31 nodes)");
+		System.err.println("");
+		System.err.println("Input / output parameters");
+		System.err.println(" <vertices>\tvertices file with format:");
+		System.err.println("           \t  <id> \\t <name> [ \\t <optionalfield>]...");
+		System.err.println(" <hc.bin>  \tharmonic centrality values, binary floats");
+		System.err.println(" <pr.bin>  \tpage rank values, binary doubles");
+		System.err.println(" <ranks_out>\tranks output, tab-separated:");
+		System.err.println("            \t   <hc_rank> <hc_val> <pr_rank> <pr_val> <name> <optfields>...");
+		System.err.println("");
 	}
 
 	public static void main(String[] args) {
-		boolean useBig = false;
+		boolean useBigGraph = false;
 		int argpos = 0;
-		while (args[argpos].startsWith("-")) {
+		while (argpos < args.length && args[argpos].startsWith("-")) {
 			switch (args[argpos]) {
 			case "--big":
-				useBig = true;
+				useBigGraph = true;
 				break;
 			default:
 				System.err.println("Unknown option " + args[argpos]);
@@ -279,12 +292,12 @@ public class JoinSortRanks {
 			}
 			argpos++;
 		}
-		if (args.length < 4) {
+		if ((args.length - argpos) < 4) {
 			showHelp();
 			System.exit(1);
 		}
 		JoinSortRanks converter;
-		if (useBig) {
+		if (useBigGraph) {
 			converter = new JoinSortRanksBig();
 		} else {
 			converter = new JoinSortRanks();

@@ -169,13 +169,9 @@ public class HostToDomainGraph {
 	}
 
 	public static void main(String[] args) {
-		if (args.length < 5) {
-			showHelp();
-			System.exit(1);
-		}
 		boolean countHosts = false;
 		int argpos = 0;
-		while (args[argpos].startsWith("-")) {
+		while (argpos < args.length && args[argpos].startsWith("-")) {
 			switch (args[argpos]) {
 			case "-c":
 				countHosts = true;
@@ -186,6 +182,10 @@ public class HostToDomainGraph {
 				System.exit(1);
 			}
 			argpos++;
+		}
+		if ((args.length - argpos) < 5) {
+			showHelp();
+			System.exit(1);
 		}
 		long maxSize = 0;
 		try {
