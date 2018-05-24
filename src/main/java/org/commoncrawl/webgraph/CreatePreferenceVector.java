@@ -71,13 +71,13 @@ public class CreatePreferenceVector {
 		long res = -1;
 		if (nextPreferenceName != null) {
 			int c = name.compareTo(nextPreferenceName);
+			while (c > 0 && nextPreferenceElement()) {
+				c = name.compareTo(nextPreferenceName);
+			}
 			if (c == 0) {
 				preferenceNamesFound++;
 				nextPreferenceElement();
 				res = lastId;
-			}
-			if (c > 0) {
-				nextPreferenceElement();
 			}
 		}
 		recordsProcessed++;
