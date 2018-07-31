@@ -9,10 +9,10 @@ SIZE="$1"
 INPUTDIR="$2"
 OUTPUTDIR="$3"
 TMPDIR=${4:-./tmp/}
+PRIVATE="" # "--private" to convert to private domains
 
 MAIN_MEM_GB=16
 PARALLEL_SORT_THREADS=2
-#CMPRS_TMP=false
 
 # Reduce host-level web graph to domain-level graph
 # - running HostToDomainGraph which has low memory requirements
@@ -94,9 +94,10 @@ if [ "$SIZE" -gt $((2**31-1024)) ]; then
     JXMX=$((8+1+10*$SIZE/2**30))
 fi
 
-java -Xmx${JXMX}g -cp target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
+java -Xmx${JXMX}g -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
      org.commoncrawl.webgraph.HostToDomainGraph \
      -c \
+     $PRIVATE \
      $SIZE \
      <(zcat $INPUTDIR/vertices-sortdomain.txt.gz) \
      >(gzip >$OUTPUTDIR/vertices.txt.gz) \
