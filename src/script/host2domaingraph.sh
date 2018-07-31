@@ -26,23 +26,33 @@ PARALLEL_SORT_THREADS=2
 #       8 GB + 10*number_of_vertices Bytes
 
 # Notes about input sorting:
-# - unfortunately the output of the cc-pyspark job does not completely meet
-#   the required sorting criteria, so we need to resort the vertices of the
-#   host graph
-# - C locale is mandatory to keep reversed hosts of one domain or top-level domain
+#
+# 1 C locale is mandatory to keep reversed hosts of one domain or top-level domain
 #   together in a single block:
 #     echo -e "com.opus\ncom.opera\nco.mopus\nco.mopera" | shuf | LC_ALL=en_US.utf8 sort
 #   vs.
 #     echo -e "com.opus\ncom.opera\nco.mopus\nco.mopera" | shuf | LC_ALL=C sort
-# - the second problem stems from the fact that a hyphen (valid in host and
+#   This requirement is met by the output of the cc-pyspark job.
+#
+# 2 the second problem stems from the fact that a hyphen (valid in host and
 #   subdomain names) is sorted before the dot:
 #     ac.gov
 #     ac.gov.ascension
 #     ac.gov.ascension-island
 #     ac.gov.ascension.mail
-#   One solution to ensure that the subdomains of "ac.gov.ascension" are not split
-#   into two blocks, is to add an artificial dot needs temporarily to the end of
-#   each host name before sorting. 
+#   Unfortunately the output of the cc-pyspark job does not completely meet this
+#   sorting criterion.
+#   The initial solution to ensure that the subdomains of "ac.gov.ascension" are not split
+#   into two blocks, was to add an artificial dot temporarily to the end of each host
+#   name during sorting:
+#     zcat vertices.txt.gz | sed -e 's/$/./' \
+#        | sort $SORTOPTS -t$'\t' -k2,2 | sed -e 's/\.$//'
+#   The domain name "ac.gov.ascension" in the example above becomes temporarily
+#   "ac.gov.ascension." and is now sorted after "ac.gov.ascension-island."
+#   
+#   To avoid this step (re-sorting billions of lines is expensive), the HostToDomainGraph
+#   class now caches potentially "missorted" candidates and processes them later together
+#   with the related subdomains / host names.
 
 
 export LC_ALL=C
@@ -67,23 +77,16 @@ else
     exit 1
 fi
 
-if ! [ -e $INPUTDIR/vertices-sortdomain.txt.gz ]; then
-
-    _VERTICES=$INPUTDIR/vertices.txt.gz
-    if [ -e $_VERTICES ]; then
-        echo "Found single vertices file: $_VERTICES"
-    elif [ -d $INPUTDIR/vertices/ ]; then
-        # vertices is a directory with multiple vertices files
-        echo "Found vertices directory, using: $_VERTICES"
-        _VERTICES="$INPUTDIR/vertices/*.gz"
-    else
-        echo "Input vertices file(s) not found"
-        exit 1
-    fi
-
-    zcat $_VERTICES | sed -e 's/$/./' \
-        | sort $SORTOPTS -t$'\t' -k2,2 | sed -e 's/\.$//' \
-        | gzip >$INPUTDIR/vertices-sortdomain.txt.gz
+_VERTICES=$INPUTDIR/vertices.txt.gz
+if [ -e $_VERTICES ]; then
+    echo "Found single vertices file: $_VERTICES"
+elif [ -d $INPUTDIR/vertices/ ]; then
+    # vertices is a directory with multiple vertices files
+    echo "Found vertices directory, using: $_VERTICES"
+    _VERTICES="$INPUTDIR/vertices/*.gz"
+else
+    echo "Input vertices file(s) not found"
+    exit 1
 fi
 
 
@@ -99,7 +102,7 @@ java -Xmx${JXMX}g -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-jar-with-depend
      -c \
      $PRIVATE \
      $SIZE \
-     <(zcat $INPUTDIR/vertices-sortdomain.txt.gz) \
+     <(zcat $_VERTICES) \
      >(gzip >$OUTPUTDIR/vertices.txt.gz) \
      <(zcat $_EDGES) \
      >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >$OUTPUTDIR/edges.txt.gz)
