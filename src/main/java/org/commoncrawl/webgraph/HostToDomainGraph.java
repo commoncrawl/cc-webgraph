@@ -41,7 +41,7 @@ public class HostToDomainGraph {
 
 	protected boolean countHosts = false;
 	protected boolean privateDomains = false;
-	protected boolean strictDomainValidate = false;
+	protected boolean strictDomainValidate = true;
 
 	private int[] ids;
 	protected long currentId = -1;
@@ -54,11 +54,13 @@ public class HostToDomainGraph {
 
 	protected static class Domain {
 		String name;
+		String revName;
 		long id;
 		long numberOfHosts;
 		List<Long> ids = new ArrayList<>();
 		public Domain(String name, long id, long numberOfHosts) {
 			this.name = name;
+			this.revName = reverseHost(name);
 			this.id = id;
 			this.numberOfHosts = numberOfHosts;
 		}
@@ -89,7 +91,7 @@ public class HostToDomainGraph {
 	public void doPrivateDomains(boolean privateDomains) {
 		this.privateDomains = privateDomains;
 	}
-	public void doStrictDomainValidate(boolean strict) {
+	public void setStrictDomainValidate(boolean strict) {
 		this.strictDomainValidate = strict;
 	}
 
@@ -123,16 +125,10 @@ public class HostToDomainGraph {
 		String domain = EffectiveTldFinder.getAssignedDomain(host, true, !privateDomains);
 		StringBuilder sb = new StringBuilder();
 		if (domain == null && !strictDomainValidate) {
-			int finalDotPos = host.lastIndexOf('.');
-			String tld = host.substring(finalDotPos+1, host.length());
-			if (EffectiveTldFinder.getEffectiveTLDs().containsKey(tld)) {
-				finalDotPos--;
-				int domainStart = host.lastIndexOf('.', finalDotPos);
-				if (domainStart < finalDotPos) {
-					domain = host.substring(domainStart+1);
-					LOG.info("Accepting {} as domain with valid tld {}", domain, tld);
-				}
+			if (EffectiveTldFinder.getEffectiveTLDs().containsKey(host) && host.indexOf('.') != -1) {
+				LOG.info("Accepting public suffix {} (containing dot) as domain", host);
 			}
+			domain = host;
 		}
 		if (domain == null) {
 			LOG.warn("No domain for host: {}", host);
@@ -145,30 +141,41 @@ public class HostToDomainGraph {
 		} else if (domain.equals(lastDomain.name)) {
 			lastDomain.add(id);
 			return null;
-		} else if (domain.length() > lastDomain.name.length() && revHost.charAt(lastDomain.name.length()) == '-'
-				&& revHost.startsWith(reverseHost(lastDomain.name))) {
+		} else if (isHyphenPrefix(lastDomain.revName, revHost)) {
 			LOG.info("Found misordered domain name (containing hyphen): {} before {} in {}",
 					reverseHost(lastDomain.name), reverseHost(domain), revHost);
 			domainStack.push(lastDomain);
 			lastDomain = new Domain(domain, id);
 			return null;
 		} else if (domainStack.size() > 0) {
-			// restore lastDomain from stack and assign Id now
-			Domain top = domainStack.peek();
-			int c = domain.compareTo(top.name);
-			if (c >= 0 && lastDomain != null) {
-				lastDomain.id = ++currentId;
-				getNodeLine(sb, lastDomain);
-				lastDomain = null;
-			}
-			if (c == 0) {
-				lastDomain = domainStack.pop();
-				lastDomain.add(id);
-				return sb.toString();
-			} else if (c > 0) {
-				domainStack.pop();
-				top.id = ++currentId;
-				getNodeLine(sb, top);
+			String revDomain = revHost.substring(0, domain.length());
+			while (domainStack.size() > 0) {
+				// restore lastDomain(s) from stack and assign Id now
+				Domain top = domainStack.peek();
+				int c = top.revName.compareTo(revDomain);
+				if (c < 0 && isHyphenPrefix(top.revName, revDomain)) {
+					// do not ship out top because top is a "hyphen"-prefix of domain
+					c = 999;
+				} else if (c > 0 && isHyphenPrefix(revDomain, top.revName)) {
+					// must ship out top since current domain is a "hyphen"-prefix of top
+					c = -999;
+				}
+				if (c <= 0 && lastDomain != null) {
+					lastDomain.id = ++currentId;
+					getNodeLine(sb, lastDomain);
+					lastDomain = null;
+				}
+				if (c == 0) {
+					lastDomain = domainStack.pop();
+					lastDomain.add(id);
+					return sb.toString();
+				} else if (c < 0) {
+					domainStack.pop();
+					top.id = ++currentId;
+					getNodeLine(sb, top);
+				} else {
+					break;
+				}
 			}
 		}
 		if (lastDomain != null) {
@@ -179,9 +186,14 @@ public class HostToDomainGraph {
 		return sb.toString();
 	}
 
-	private String getNodeLine() {
+	private static boolean isHyphenPrefix(String revDomainA, String revDomainB) {
+		return revDomainB.length() > revDomainA.length() && revDomainB.charAt(revDomainA.length()) == '-'
+				&& revDomainB.startsWith(revDomainA);
+	}
+
+	private String getNodeLine(Domain domain) {
 		StringBuilder b = new StringBuilder();
-		getNodeLine(b, lastDomain);
+		getNodeLine(b, domain);
 		return b.toString();
 	}
 
@@ -227,9 +239,14 @@ public class HostToDomainGraph {
 	}
 
 	private void finishNodes(PrintStream out) {
+		while (domainStack.size() > 0) {
+			Domain domain = domainStack.pop();
+			domain.id = ++currentId;
+			out.println(getNodeLine(domain));
+		}
 		if (lastDomain != null) {
 			lastDomain.id = ++currentId;
-			out.println(getNodeLine());
+			out.println(getNodeLine(lastDomain));
 		}
 	}
 
@@ -256,24 +273,20 @@ public class HostToDomainGraph {
 		System.err.println(" -c\tcount hosts per domain (additional column in <nodes_out>");
 		System.err.println(" --private\tconvert to private domains (from the private section of the public");
 		System.err.println("          \tsuffix list, see https://publicsuffix.org/list/#list-format");
-		System.err.println(" --strict-domain-validate\tstrictly discard potentially invalid domains");
+		System.err.println(" --no-strict-domain-validate\tstrictly discard potentially invalid domains");
 	}
 
 	public static void main(String[] args) {
 		boolean countHosts = false;
-		boolean privateDomains = false;
-		boolean strictDomainValidate = false;
+		boolean noStrictDomainValidate = false;
 		int argpos = 0;
 		while (argpos < args.length && args[argpos].startsWith("-")) {
 			switch (args[argpos]) {
 			case "-c":
 				countHosts = true;
 				break;
-			case "--private":
-				privateDomains = true;
-				break;
-			case "--strict-domain-validate":
-				strictDomainValidate = true;
+			case "--no-strict-domain-validate":
+				noStrictDomainValidate = true;
 				break;
 			default:
 				System.err.println("Unknown option " + args[argpos]);
@@ -300,8 +313,7 @@ public class HostToDomainGraph {
 			converter = new HostToDomainGraphBig(maxSize);
 		}
 		converter.doCount(countHosts);
-		converter.doPrivateDomains(privateDomains);
-		converter.doStrictDomainValidate(strictDomainValidate);
+		converter.setStrictDomainValidate(!noStrictDomainValidate);
 		String nodesIn = args[argpos+1];
 		String nodesOut = args[argpos+2];
 		try (Stream<String> in = Files.lines(Paths.get(nodesIn));

@@ -9,7 +9,7 @@ SIZE="$1"
 INPUTDIR="$2"
 OUTPUTDIR="$3"
 TMPDIR=${4:-./tmp/}
-PRIVATE="" # "--private" to convert to private domains
+NO_STRICT_VALIDATE="${NO_STRICT_VALIDATE-""}" # "--no-strict-domain-validate"
 
 MAIN_MEM_GB=16
 PARALLEL_SORT_THREADS=2
@@ -99,9 +99,8 @@ fi
 
 java -Xmx${JXMX}g -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
      org.commoncrawl.webgraph.HostToDomainGraph \
-     -c \
-     $PRIVATE \
-     $SIZE \
+     $NO_STRICT_VALIDATE \
+     -c $SIZE \
      <(zcat $_VERTICES) \
      >(gzip >$OUTPUTDIR/vertices.txt.gz) \
      <(zcat $_EDGES) \
