@@ -24,9 +24,15 @@ JOIN_RANKS_IN_MEMORY=${JOIN_RANKS_IN_MEMORY:-true}
 # => it's only an empirical value and possibly needs to be adjusted
 THREADS=2
 HYP_REG=4
+## on r4.8xlarge (244 GB)
+#THREADS=32
+#HYP_REG=4   # 4-5 for hostgraph, 10 for domain graph
 ## on r4.16xlarge (488 GB)
-THREADS=64
-HYP_REG=5   # 4-6 for hostgraph, 10 for domain graph
+#THREADS=64
+#HYP_REG=5   # 4-6 for hostgraph, 10 for domain graph
+## on r5.12xlarge (384 GB)
+#THREADS=48
+#HYP_REG=5   # 4-6 for hostgraph, 10 for domain graph
 ## on x1.16xlarge (976 GB)
 #THREADS=64
 #HYP_REG=9
@@ -62,5 +68,5 @@ export SORT_BUFFER_SIZE=${SORT_BUFFER_SIZE:-$MEM_10PERC}
 
 # max. number of merge inputs
 # (should be not less than number of vertices / edges files to be merged)
-export SORT_BATCHES=${SORT_BATCHES:-160}
+export SORT_BATCHES=${SORT_BATCHES:-240}
 

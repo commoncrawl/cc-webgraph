@@ -169,6 +169,10 @@ set -exo pipefail
 
 if [ -d $EDGES ]; then
     # edges is a directory with multiple files
+    sort_input=""
+    for e in $EDGES/part-*.gz; do
+        sort_input="$sort_input <(zcat $e)"
+    done
     if ${USE_WEBGRAPH_BIG:-false}; then
         ## TODO:
         ##    * option  --threads  not available in webgraph-big
@@ -184,15 +188,11 @@ if [ -d $EDGES ]; then
         ##               at it.unimi.dsi.big.webgraph.ArcListASCIIGraph.load(ArcListASCIIGraph.java:283)
         ##               at it.unimi.dsi.big.webgraph.ArcListASCIIGraph.load(ArcListASCIIGraph.java:279)
         ##               at it.unimi.dsi.big.webgraph.ArcListASCIIGraph.loadOffline(ArcListASCIIGraph.java:255)
-        sort_input=""
-        for e in $EDGES/part-*.gz; do
-            sort_input="$sort_input <(zcat $e)"
-        done
         _step bvgraph \
               bash -c "eval \"sort --batch-size=$SORT_BATCHES -t$'\t' -k1,1n -k2,2n --stable --merge $sort_input\" | $WG $WGP.BVGraph --once -g $WGP.ArcListASCIIGraph - $FULLNAME"
     else
         _step bvgraph \
-              $WG $WGP.BVGraph --threads $THREADS -g $WGP.ArcListASCIIGraph <(zcat $EDGES/*.gz) $FULLNAME
+              bash -c "$WG $WGP.BVGraph --threads $THREADS -g $WGP.ArcListASCIIGraph <(eval \"sort --batch-size=$SORT_BATCHES -t$'\t' -k1,1n -k2,2n --stable --merge $sort_input\") $FULLNAME"
     fi
 else
     if ${USE_WEBGRAPH_BIG:-false}; then
