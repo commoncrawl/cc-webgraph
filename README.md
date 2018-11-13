@@ -15,7 +15,7 @@ The host-level web graph is built with help of PySpark, the corresponding code i
 
 ### Domain-Level Web Graph
 
-The domain-level web graph is distilled from the host-level graph by mapping host names to domain names. The ID mapping is kept in memory as an int array (if less than 2³¹ vertices). The Java tool to fold the host graph is best run from the script [host2domaingraph.sh](src/script/host2domaingraph.sh).
+The domain-level web graph is distilled from the host-level graph by mapping host names to domain names. The ID mapping is kept in memory as an int array or [FastUtil's big array](http://fastutil.di.unimi.it/docs/it/unimi/dsi/fastutil/BigArrays.html) if the host-level graph has more vertices than a Java array can hold (around 2³¹). The Java tool to fold the host graph is best run from the script [host2domaingraph.sh](src/script/host2domaingraph.sh).
 
 ### Processing Graphs using the Webgraph Framework
 

@@ -232,7 +232,7 @@ fi
 _step_bg connected 15 \
          $WG $WGP.algo.ConnectedComponents --threads $THREADS -m --renumber --sizes -t $FULLNAME-t $FULLNAME
 connected_pid=$!
-_step_bg strongly-connected 15 \
+_step_bg strongly_connected 15 \
          $WG $WGP.algo.StronglyConnectedComponents --renumber --sizes $FULLNAME
 strongly_connected_pid=$!
 
@@ -263,8 +263,17 @@ else
 fi
 
 # stats use connected components files, wait for these to be finished
-wait $connected_pid
-wait $strongly_connected_pid
+if ! kill -0 $connected_pid; then
+    : # step connected already finished
+else
+    wait $connected_pid
+fi
+if ! kill -0 $connected_pid; then
+    : # step strongly_connected already finished
+else
+    wait $strongly_connected_pid
+fi
+
 _step stats \
          $WG $WGP.Stats --save-degrees $FULLNAME
 
@@ -276,7 +285,8 @@ _step connected_distrib \
 #       connected_distrib $NODES $FULLNAME.sccsizes $FULLNAME-strongly-connected-components-distrib.txt.gz
 
 _step indegree_distrib \
-      degree_distrib indegree $FULLNAME outdegree_distrib \
+      degree_distrib indegree $FULLNAME
+_step outdegree_distrib \
       degree_distrib outdegree $FULLNAME
 
 wait # until background processes are finished
