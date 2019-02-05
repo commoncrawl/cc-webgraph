@@ -248,6 +248,7 @@ public class HostToDomainGraph {
 			lastDomain.id = ++currentId;
 			out.println(getNodeLine(lastDomain));
 		}
+		LOG.info("Number of nodes: {}", currentId + 1);
 	}
 
 	public static class HostToDomainGraphBig extends HostToDomainGraph {

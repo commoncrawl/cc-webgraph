@@ -99,7 +99,7 @@ function join_harmonicc_pagerank() (
         HEADER="$HEADER\t$6"
     fi
     SORTOPTS="$SORT_PARALLEL_THREADS_OPT --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
-    (echo -e "$HEADER";target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar
+    (echo -e "$HEADER";
      zcat $_IN_HC | sort $SORTOPTS -t$'\t' -k3,3 --unique --stable \
          | join -a1 -a2 -e'---' -t$'\t' -j3 -o1.1,1.2,2.1,2.2,0$_EXTRA_FIELDS - \
                 <(zcat $_IN_PR | sort $SORTOPTS -t$'\t' -k3,3 --unique --stable) \
