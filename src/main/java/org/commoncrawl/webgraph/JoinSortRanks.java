@@ -127,7 +127,7 @@ public class JoinSortRanks {
 	}
 
 	public void convert(Function<String, String> func, Stream<String> in, PrintStream out) {
-        in.map(func).forEach(out::println);
+		in.map(func).forEach(out::println);
 	}
 
 	public String addRanks(String line) {
