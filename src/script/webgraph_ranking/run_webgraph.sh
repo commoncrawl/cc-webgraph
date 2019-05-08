@@ -6,7 +6,10 @@ source "$(dirname $0)"/webgraph_config.sh
 
 DIR=$(dirname $0)/webgraph-$WEBGRAPH_VERSION
 
-CLASSPATH=$DIR/webgraph-$WEBGRAPH_VERSION.jar:$(ls $DIR/deps/*.jar | tr '\n' ':')
+_CLASSPATH=$DIR/webgraph-$WEBGRAPH_VERSION.jar:$(ls $DIR/deps/*.jar | tr '\n' ':')
+if [ -n "$CLASSPATH" ]; then
+    _CLASSPATH=$CLASSPATH:$_CLASSPATH
+fi
 
 # heuristics to run webgraph with 80% of available RAM (or all RAM - 8 GB if this is larger)
 MEMMB=$(free -m | perl -ne 'do { $p80 = int($1*.8); $a8 = int($1-8192); $m = $p80; $m = $a8 if $a8 > $p80; print $m; last } if /(\d+)/')
@@ -23,7 +26,7 @@ case "$1" in
 esac
 
 set -x
-time java $JAVA_OPTS -cp $CLASSPATH "$@"
+time java $JAVA_OPTS -cp $_CLASSPATH "$@"
 
 
 

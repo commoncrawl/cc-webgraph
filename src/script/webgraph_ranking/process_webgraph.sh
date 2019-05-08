@@ -268,7 +268,7 @@ if ! kill -0 $connected_pid; then
 else
     wait $connected_pid
 fi
-if ! kill -0 $connected_pid; then
+if ! kill -0 $strongly_connected_pid; then
     : # step strongly_connected already finished
 else
     wait $strongly_connected_pid

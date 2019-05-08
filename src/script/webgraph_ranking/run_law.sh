@@ -4,7 +4,10 @@ source "$(dirname $0)"/webgraph_config.sh
 
 DIR=$(dirname $0)/law-$LAW_VERSION
 
-CLASSPATH=$DIR/law-$LAW_VERSION.jar:$(ls $DIR/deps/*.jar | tr '\n' ':')
+_CLASSPATH=$DIR/law-$LAW_VERSION.jar:$(ls $DIR/deps/*.jar | tr '\n' ':')
+if [ -n "$CLASSPATH" ]; then
+    _CLASSPATH=$CLASSPATH:$_CLASSPATH
+fi
 
 # heuristics to run law with 80% of available RAM
 MEMMB=$(free -m | perl -ne 'do { print int($1*.8); last } if /(\d+)/')
@@ -21,7 +24,7 @@ case "$1" in
 esac
 
 set -x
-time java $JAVA_OPTS -cp $CLASSPATH "$@"
+time java $JAVA_OPTS -cp $_CLASSPATH "$@"
 
 
 
