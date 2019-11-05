@@ -13,7 +13,7 @@ set -x
 #      git clone https://github.com/commoncrawl/cc-pyspark.git
 #   - and make it the working directory
 #      cd cc-pyspark
-#   - point SPARK_HOME to your installation of Apache Spark (http://spark.apache.org/)
+#   - point SPARK_HOME to your installation of Apache Spark (https://spark.apache.org/)
 #      vi ./spark_env.sh
 #     and make sure that your Spark cluster (on Hadoop YARN) is running!
 #   - edit the hostgraph build configuration
@@ -22,7 +22,7 @@ set -x
 #      .../build_hostgraph.sh
 
 # Note: the script is tested using a Hadoop cluster running
-# Cloudera CDH 5.13.0 on Ubuntu 16.04. You may need to adapt it
+# Cloudera CDH 6.3.1 on Ubuntu 18.04. You may need to adapt it
 # to run on different setups.
 
 
@@ -121,7 +121,10 @@ function create_input_splits() {
         cd input/$CRAWL
         wget https://commoncrawl.s3.amazonaws.com/crawl-data/$CRAWL/wat.paths.gz
         wget https://commoncrawl.s3.amazonaws.com/crawl-data/$CRAWL/non200responses.paths.gz
-        zcat non200responses.paths.gz wat.paths.gz \
+        if $INCLUDE_ROBOTSTXT_SITEMAP_LINKS; then
+            wget https://commoncrawl.s3.amazonaws.com/crawl-data/$CRAWL/robotstxt.paths.gz
+        fi
+        zcat *.paths.gz \
             | shuf \
             | perl -lne 'print "s3://commoncrawl/", $_' \
                    >input.txt
@@ -143,6 +146,9 @@ function create_input_splits() {
         for split in input/$CRAWL/input_split_*.txt; do
             hadoop fs -copyFromLocal -f $split $HDFS_BASE_DIR/input/$CRAWL/
         done
+        # The input list is considerably small because it only references s3:// paths:
+        # deploy it on every node to make all tasks NODE_LOCAL
+        hadoop fs -setrep $(($NUM_EXECUTORS+1)) $HDFS_BASE_DIR/input/$CRAWL/ >&2
     else
         NUM_INPUT_PATHS=$(cat input/$CRAWL/input.txt | wc -l)
         NUM_SPLITS=$((1+$NUM_INPUT_PATHS/$MAX_INPUT_SIZE))
@@ -180,6 +186,7 @@ for CRAWL in ${CRAWLS[@]}; do
               --conf spark.network.timeout=300s \
               --conf spark.shuffle.io.maxRetries=50 \
               --conf spark.shuffle.io.retryWait=600s \
+              --conf spark.locality.wait=0s \
               --num-executors $NUM_EXECUTORS \
               --executor-cores $EXECUTOR_CORES \
               --executor-memory $EXECUTOR_MEM \
@@ -235,6 +242,7 @@ for CRAWL in ${CRAWLS[@]}; do
               --conf spark.network.timeout=300s \
               --conf spark.shuffle.io.maxRetries=50 \
               --conf spark.shuffle.io.retryWait=60s \
+              --conf spark.locality.wait=1s \
               --num-executors $NUM_EXECUTORS \
               --executor-cores $EXECUTOR_CORES \
               --executor-memory $EXECUTOR_MEM \
@@ -290,6 +298,7 @@ if [ -n "MERGE_NAME" ]; then
         --conf spark.network.timeout=300s \
         --conf spark.shuffle.io.maxRetries=50 \
         --conf spark.shuffle.io.retryWait=60s \
+        --conf spark.locality.wait=1s \
         --num-executors $NUM_EXECUTORS \
         --executor-cores $EXECUTOR_CORES \
         --executor-memory $EXECUTOR_MEM \

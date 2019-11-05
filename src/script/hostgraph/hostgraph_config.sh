@@ -11,7 +11,11 @@
 ### saved as tuples <from_host, to_host>
 
 # crawls to be processed
-CRAWLS=("CC-MAIN-2017-34" "CC-MAIN-2017-39" "CC-MAIN-2017-43")
+CRAWLS=("CC-MAIN-2019-35" "CC-MAIN-2019-39" "CC-MAIN-2019-43")
+
+# whether to include links to sitemaps contained in robots.txt files
+# Note: often links to sitemap indicate relations between domain owners.
+INCLUDE_ROBOTSTXT_SITEMAP_LINKS=true
 
 # whether to construct a host-level graph for each input crawl
 CONSTRUCT_HOSTGRAPH=false
@@ -20,21 +24,22 @@ CONSTRUCT_HOSTGRAPH=false
 # - splits hostlink extraction into multiple jobs
 # - output is checkpointed on S3 after each job
 #   (useful if cluster runs on spot instances)
-MAX_INPUT_SIZE=40000
+MAX_INPUT_SIZE=45000
 
 # hdfs:// directory where input and output is kept
 HDFS_BASE_DIR=hdfs:///user/ubuntu/webgraph
 WAREHOUSE_DIR=$HDFS_BASE_DIR
 
 # where to keep results on s3://
-S3_OUTPUT_PREFIX=s3://my-webgraph
-S3A_OUTPUT_PREFIX=s3a://my-webgraph
+# (note: this is a private bucket and needs to be changed)
+S3_OUTPUT_PREFIX=s3://commoncrawl-webgraph
+S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 
 
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2017-aug-sep-oct
+MERGE_NAME=cc-main-2019-aug-sep-oct
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
@@ -65,12 +70,13 @@ STOP_FILE_=$LOGDIR/$(basename $0 .sh).stop
 
 ################################################################################
 ### Spark / Yarn cluster configuration
-NUM_EXECUTORS=6
-EXECUTOR_CONFIG="r3.8xlarge"
+NUM_EXECUTORS=${NUM_EXECUTORS:-16}
+EXECUTOR_CONFIG=${EXECUTOR_CONFIG:-"r5.xlarge"}
 # NOTE:
 #  - step 1 (host link extraction) can be run on smaller instances
-#  - webgraph construction (esp. for merged graphs) needs instances
-#    with sufficient amount of RAM
+#    or "compute optimized" instance types
+#  - webgraph construction (esp. for merged graphs including multiple monthyl crawls)
+#    needs instances with sufficient amount of RAM (32 GB or more)
 #  - assigning IDs in multiple partitions
 #    (see hostlinks_to_graph.py --vertex_partitions)
 #    reduces the memory requirements significantly
@@ -85,25 +91,39 @@ case "$EXECUTOR_CONFIG" in
         EXECUTOR_CORES=12
         EXECUTOR_MEM=40g
         ;;
-    "c3.xlarge" )
-        EXECUTOR_CORES=6
+    c[345]*.xlarge )
+        EXECUTOR_CORES=5
         EXECUTOR_MEM=5g
         ;;
-    "r3.xlarge" )
-        EXECUTOR_CORES=6
-        EXECUTOR_MEM=24g
+    c[345]*.2xlarge )
+        EXECUTOR_CORES=9
+        EXECUTOR_MEM=10g
         ;;
-    "r3.2xlarge" )
-        EXECUTOR_CORES=12
-        EXECUTOR_MEM=48g
+    c[345]*.4xlarge )
+        EXECUTOR_CORES=18
+        EXECUTOR_MEM=22g
         ;;
-    "r3.4xlarge" )
-        EXECUTOR_CORES=24
-        EXECUTOR_MEM=96g
+    r[345]*.xlarge )
+        EXECUTOR_CORES=7
+        EXECUTOR_MEM=23g
         ;;
-    "r3.8xlarge" )
-        EXECUTOR_CORES=48
-        EXECUTOR_MEM=192g
+    r[345]*.2xlarge )
+        EXECUTOR_CORES=14
+        EXECUTOR_MEM=46g
+        ;;
+    r[345]*.4xlarge )
+        EXECUTOR_CORES=28
+        EXECUTOR_MEM=94g
+        ;;
+    r[345]*.8xlarge )
+        EXECUTOR_CORES=56
+        EXECUTOR_MEM=190g
+        ;;
+    "custom" )
+        if [ -z "$EXECUTOR_CORES" ] || [ -z "$EXECUTOR_MEM" ]; then
+            echo "No valid custom executor configuration: must specify EXECUTOR_CORES and EXECUTOR_MEM'" >&2
+            exit 1
+        fi
         ;;
     * )
         echo "No valid executor configuration: '$EXECUTOR_CONFIG'" >&2
