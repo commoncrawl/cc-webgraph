@@ -9,9 +9,11 @@ if [ -n "$CLASSPATH" ]; then
     _CLASSPATH=$CLASSPATH:$_CLASSPATH
 fi
 
-# heuristics to run law with 80% of available RAM
-MEMMB=$(free -m | perl -ne 'do { print int($1*.8); last } if /(\d+)/')
-JAVA_OPTS=-Xmx${MEMMB}m
+if ! echo "$JAVA_OPTS" | grep -qE -e "-Xmx[0-9]+"; then
+    # heuristics to run law with 80% of available RAM
+    MEMMB=$(free -m | perl -ne 'do { print int($1*.8); last } if /(\d+)/')
+    JAVA_OPTS="$JAVA_OPTS -Xmx${MEMMB}m"
+fi
 
 
 case "$1" in

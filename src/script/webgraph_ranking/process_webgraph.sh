@@ -223,7 +223,7 @@ _step hyperball \
 
 if ${USE_WEBGRAPH_BIG:-false}; then
     _step pagerank \
-          $LW it.unimi.dsi.big.law.rank.PageRankParallelGaussSeidel      --mapped --threads $THREADS $FULLNAME-t $FULLNAME-pagerank
+          $LW it.unimi.dsi.law.big.rank.PageRankParallelGaussSeidel      --mapped --threads $THREADS $FULLNAME-t $FULLNAME-pagerank
 else
     _step pagerank \
           $LW it.unimi.dsi.law.rank.PageRankParallelGaussSeidel --expand --mapped --threads $THREADS $FULLNAME-t $FULLNAME-pagerank
