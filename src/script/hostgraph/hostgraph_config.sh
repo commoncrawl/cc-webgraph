@@ -11,7 +11,7 @@
 ### saved as tuples <from_host, to_host>
 
 # crawls to be processed
-CRAWLS=("CC-MAIN-2019-35" "CC-MAIN-2019-39" "CC-MAIN-2019-43")
+CRAWLS=("CC-MAIN-2019-47" "CC-MAIN-2019-51" "CC-MAIN-2020-05")
 
 # whether to include links to sitemaps contained in robots.txt files
 # Note: often links to sitemap indicate relations between domain owners.
@@ -39,7 +39,7 @@ S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2019-aug-sep-oct
+MERGE_NAME=cc-main-2019-20-nov-dec-jan
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
@@ -65,6 +65,9 @@ LOGDIR=$PWD
 # file to stop the workflow (stops after a the currently running step(s) are done)
 STOP_FILE_=$LOGDIR/$(basename $0 .sh).stop
 
+# use Python executable different than default "python"
+export PYSPARK_PYTHON=python3
+
 ################################################################################
 
 
@@ -83,40 +86,32 @@ EXECUTOR_CONFIG=${EXECUTOR_CONFIG:-"r5.xlarge"}
 
 
 case "$EXECUTOR_CONFIG" in
-    "m2.xlarge" )
-        EXECUTOR_CORES=4
-        EXECUTOR_MEM=6g
-        ;;
-    "m2.4xlarge" )
-        EXECUTOR_CORES=12
-        EXECUTOR_MEM=40g
-        ;;
     c[345]*.xlarge )
-        EXECUTOR_CORES=5
+        EXECUTOR_CORES=3
         EXECUTOR_MEM=5g
         ;;
     c[345]*.2xlarge )
-        EXECUTOR_CORES=9
+        EXECUTOR_CORES=6
         EXECUTOR_MEM=10g
         ;;
     c[345]*.4xlarge )
-        EXECUTOR_CORES=18
+        EXECUTOR_CORES=12
         EXECUTOR_MEM=22g
         ;;
     r[345]*.xlarge )
-        EXECUTOR_CORES=7
+        EXECUTOR_CORES=3
         EXECUTOR_MEM=23g
         ;;
     r[345]*.2xlarge )
-        EXECUTOR_CORES=14
+        EXECUTOR_CORES=6
         EXECUTOR_MEM=46g
         ;;
     r[345]*.4xlarge )
-        EXECUTOR_CORES=28
+        EXECUTOR_CORES=12
         EXECUTOR_MEM=94g
         ;;
     r[345]*.8xlarge )
-        EXECUTOR_CORES=56
+        EXECUTOR_CORES=24
         EXECUTOR_MEM=190g
         ;;
     "custom" )

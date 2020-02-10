@@ -26,6 +26,10 @@ set -x
 # to run on different setups.
 
 
+SPARK_ON_YARN="--master yarn"
+SPARK_HADOOP_OPTS=""
+SPARK_EXTRA_OPTS=""
+
 # source library functions
 source $(dirname $0)/../workflow_lib.sh
 
@@ -34,7 +38,6 @@ source $(dirname $0)/hostgraph_config.sh
 
 # define SPARK_HOME and HADOOP_CONF_DIR
 source $PWD/spark_env.sh
-
 
 
 ################################################################################
@@ -177,15 +180,16 @@ for CRAWL in ${CRAWLS[@]}; do
 
         _step hostlinks.$CRAWL.split$i \
               $SPARK_HOME/bin/spark-submit \
-              --master yarn \
+              $SPARK_ON_YARN \
+              $SPARK_HADOOP_OPTS \
               --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
               --conf spark.task.maxFailures=80 \
               --conf spark.executor.memory=$EXECUTOR_MEM \
               --conf spark.driver.memory=6g \
               --conf spark.core.connection.ack.wait.timeout=600s \
               --conf spark.network.timeout=300s \
-              --conf spark.shuffle.io.maxRetries=50 \
-              --conf spark.shuffle.io.retryWait=600s \
+              --conf spark.shuffle.io.maxRetries=5 \
+              --conf spark.shuffle.io.retryWait=30s \
               --conf spark.locality.wait=0s \
               --num-executors $NUM_EXECUTORS \
               --executor-cores $EXECUTOR_CORES \
@@ -193,6 +197,7 @@ for CRAWL in ${CRAWLS[@]}; do
               --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR/$CRAWL \
               --conf spark.sql.parquet.compression.codec=gzip \
               --py-files sparkcc.py \
+              $SPARK_EXTRA_OPTS \
               ./wat_extract_links.py \
               --num_input_partitions $INPUT_PARTITIONS \
               --num_output_partitions $OUTPUT_PARTITIONS \
@@ -231,7 +236,8 @@ for CRAWL in ${CRAWLS[@]}; do
 
         _step hostgraph.$CRAWL \
               $SPARK_HOME/bin/spark-submit \
-              --master yarn \
+              $SPARK_ON_YARN \
+              $SPARK_HADOOP_OPTS \
               --py-files sparkcc.py \
               --py-files iana_tld.py \
               --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
@@ -240,14 +246,15 @@ for CRAWL in ${CRAWLS[@]}; do
               --conf spark.driver.memory=6g \
               --conf spark.core.connection.ack.wait.timeout=600s \
               --conf spark.network.timeout=300s \
-              --conf spark.shuffle.io.maxRetries=50 \
-              --conf spark.shuffle.io.retryWait=60s \
+              --conf spark.shuffle.io.maxRetries=5 \
+              --conf spark.shuffle.io.retryWait=30s \
               --conf spark.locality.wait=1s \
               --num-executors $NUM_EXECUTORS \
               --executor-cores $EXECUTOR_CORES \
               --executor-memory $EXECUTOR_MEM \
               --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR/$CRAWL \
               --conf spark.sql.parquet.compression.codec=gzip \
+              $SPARK_EXTRA_OPTS \
               ./hostlinks_to_graph.py \
               --validate_host_names \
               --save_as_text $HDFS_BASE_DIR/text/$CRAWL \
@@ -287,7 +294,8 @@ if [ -n "MERGE_NAME" ]; then
 
     _step hostgraph_merged \
       $SPARK_HOME/bin/spark-submit \
-        --master yarn \
+        $SPARK_ON_YARN \
+        $SPARK_HADOOP_OPTS \
         --py-files sparkcc.py \
         --py-files iana_tld.py \
         --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
@@ -296,14 +304,15 @@ if [ -n "MERGE_NAME" ]; then
         --conf spark.driver.memory=6g \
         --conf spark.core.connection.ack.wait.timeout=600s \
         --conf spark.network.timeout=300s \
-        --conf spark.shuffle.io.maxRetries=50 \
-        --conf spark.shuffle.io.retryWait=60s \
+        --conf spark.shuffle.io.maxRetries=5 \
+        --conf spark.shuffle.io.retryWait=30s \
         --conf spark.locality.wait=1s \
         --num-executors $NUM_EXECUTORS \
         --executor-cores $EXECUTOR_CORES \
         --executor-memory $EXECUTOR_MEM \
         --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR \
         --conf spark.sql.parquet.compression.codec=gzip \
+        $SPARK_EXTRA_OPTS \
         ./hostlinks_to_graph.py \
         --validate_host_names \
         --save_as_text $HDFS_BASE_DIR/text/$MERGE_NAME \

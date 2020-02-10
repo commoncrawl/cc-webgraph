@@ -3,7 +3,7 @@
 # software library versions, see
 #  http://webgraph.di.unimi.it/
 #  http://law.di.unimi.it/software.php
-WEBGRAPH_VERSION=3.6.2
+WEBGRAPH_VERSION=3.6.3
 WEBGRAPH_BIG_VERSION=3.5.1
 LAW_VERSION=2.6.0
 
@@ -22,7 +22,7 @@ JOIN_RANKS_IN_MEMORY=${JOIN_RANKS_IN_MEMORY:-true}
 # depend on the size of the machine (here EC2 instance)
 # ... and of the graph to be processed
 # => it's only an empirical value and possibly needs to be adjusted
-THREADS=2
+THREADS=${THREADS:-2}
 HYP_REG=4
 ## on r4.8xlarge (244 GB)
 #THREADS=32

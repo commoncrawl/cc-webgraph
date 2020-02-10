@@ -58,7 +58,7 @@ PARALLEL_SORT_THREADS=2
 export LC_ALL=C
 
 # sort with large buffers, merge sort over many files if possible
-SORTOPTS="--batch-size 128 --buffer-size $((1+$MAIN_MEM_GB/3))g --parallel=$PARALLEL_SORT_THREADS --temporary-directory $TMPDIR --compress-program=gzip"
+SORTOPTS="--batch-size 128 --buffer-size $((1+$MAIN_MEM_GB/5))g --parallel=$PARALLEL_SORT_THREADS --temporary-directory $TMPDIR" # --compress-program=gzip
 
 set -exo pipefail
 
@@ -92,7 +92,7 @@ fi
 
 mkdir -p $OUTPUTDIR/
 
-JXMX=$((2+1+4*$SIZE/2**30))
+JXMX=$((2+1+5*$SIZE/2**30))
 if [ "$SIZE" -gt $((2**31-1024)) ]; then
     JXMX=$((8+1+10*$SIZE/2**30))
 fi
