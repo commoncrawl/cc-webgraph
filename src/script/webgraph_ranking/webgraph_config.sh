@@ -4,7 +4,7 @@
 #  http://webgraph.di.unimi.it/
 #  http://law.di.unimi.it/software.php
 WEBGRAPH_VERSION=3.6.3
-WEBGRAPH_BIG_VERSION=3.5.1
+WEBGRAPH_BIG_VERSION=3.5.2
 LAW_VERSION=2.6.0
 
 # size of the graph (default: 64 million nodes)

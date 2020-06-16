@@ -147,10 +147,10 @@ function connected_distrib() (
     NUM_NODES=$1
     INPUT=$2
     OUTPUT=$3
-    SORTOPTS="$SORT_PARALLEL_THREADS_OPT --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
-    (echo -e "  #freq #size"; \
-     $LW it.unimi.dsi.law.io.tool.DataInput2Text --type int $INPUT - | sort $SORTOPTS -nr | uniq -c \
-         | perl -lpe 'if ($. <= 10) { /(\d+)$/; $_ .= sprintf("\t%2.2f%%", 100*$1/'$NUM_NODES') }') \
+    (echo -e "#freq\t#size\t#perc"; \
+     $LW it.unimi.dsi.law.io.tool.DataInput2Text --type int $INPUT - \
+         | perl -lne '$h{$_}++; END { while (($k,$v)=each %h) { print sprintf("%d\t%d\t%9.6f%%", $v, $k, 100*$k*$v/'$NUM_NODES') } }' \
+         | sort -k2,2nr) \
         | gzip >$OUTPUT
 )
 
@@ -280,7 +280,7 @@ _step stats \
 NODES=$(perl -lne 'print if s@^nodes=@@' $FULLNAME.stats)
 _step connected_distrib \
       connected_distrib $NODES $FULLNAME.wccsizes $FULLNAME-connected-components-distrib.txt.gz
-# it.unimi.dsi.webgraph.Stats writes *.sccdistr (but there is now *.wccdistr)
+# it.unimi.dsi.webgraph.Stats writes *.sccdistr (but there is no *.wccdistr)
 # _step strongly_connected_distrib \
 #       connected_distrib $NODES $FULLNAME.sccsizes $FULLNAME-strongly-connected-components-distrib.txt.gz
 
