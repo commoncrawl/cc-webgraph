@@ -138,7 +138,7 @@ function join_ranks_in_memory() (
         JAVACLASSPATH="$JAVACLASSPATH:$CLASSPATH"
     fi
     (echo -e "$HEADER";
-     java $JAVAOPTS -cp $JAVACLASSPATH org.commoncrawl.webgraph.JoinSortRanks $OPTS <(zcat $_VERT) $_HC $_PR -) \
+     $JAVA_HOME/bin/java $JAVAOPTS -cp $JAVACLASSPATH org.commoncrawl.webgraph.JoinSortRanks $OPTS <(zcat $_VERT) $_HC $_PR -) \
       | sort $SORTOPTS -t$'\t' -k1,1n --stable | gzip >$_OUT
 )
 

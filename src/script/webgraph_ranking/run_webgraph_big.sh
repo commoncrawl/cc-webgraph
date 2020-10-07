@@ -25,7 +25,7 @@ case "$1" in
 esac
 
 set -x
-time java $JAVA_OPTS -cp $CLASSPATH "$@"
+time $JAVA_HOME/bin/java $JAVA_OPTS -cp $CLASSPATH "$@"
 
 
 

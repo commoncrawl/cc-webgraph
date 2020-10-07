@@ -3,9 +3,9 @@
 # software library versions, see
 #  http://webgraph.di.unimi.it/
 #  http://law.di.unimi.it/software.php
-WEBGRAPH_VERSION=3.6.3
-WEBGRAPH_BIG_VERSION=3.5.2
-LAW_VERSION=2.6.0
+WEBGRAPH_VERSION=3.6.5
+WEBGRAPH_BIG_VERSION=3.6.0
+LAW_VERSION=2.6.2
 
 # size of the graph (default: 64 million nodes)
 # - no exact size is needed, just to estimate the required Java heap space

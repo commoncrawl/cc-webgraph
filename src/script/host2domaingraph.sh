@@ -97,7 +97,7 @@ if [ "$SIZE" -gt $((2**31-1024)) ]; then
     JXMX=$((8+1+10*$SIZE/2**30))
 fi
 
-java -Xmx${JXMX}g -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
+$JAVA_HOME/bin/java -Xmx${JXMX}g -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
      org.commoncrawl.webgraph.HostToDomainGraph \
      $NO_STRICT_VALIDATE \
      -c $SIZE \
