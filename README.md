@@ -25,12 +25,7 @@ The domain-level web graph is distilled from the host-level graph by mapping hos
 
 To analyze the graph structure and calculate rankings you may further process the graphs using software from the  Laboratory for Web Algorithmics (LAW) at the University of Milano, namely the [WebGraph framework](http://webgraph.di.unimi.it/) and the [LAW library](http://law.di.unimi.it/software.php).
 
-A couple of scripts which may help you to install the webgraph framework and run the tools to build and process the graphs are provided in [src/script/webgraph_ranking/](src/script/webgraph_ranking/). They're also used to prepare the Common Crawl web graph releases. The first script installs the webgraph and LAW software in the same directory where the scripts are located:
-```
-cd ./src/script/webgraph_ranking/
-./install_webgraph.sh
-cd ../../../
-```
+A couple of scripts may help you to run the WebGraph tools to build and process the graphs are provided in [src/script/webgraph_ranking/](src/script/webgraph_ranking/). They're also used to prepare the Common Crawl web graph releases.
 
 To process a webgraph and rank the nodes, you should first adapt the configuration to your graph and hardware setup:
 ```

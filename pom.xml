@@ -14,6 +14,10 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
 
+		<webgraph.version>3.6.5</webgraph.version>
+		<webgraph.big.version>3.6.0</webgraph.big.version>
+		<law.version>2.6.2</law.version>
+
 		<slf4j-api.version>1.7.25</slf4j-api.version>
 
 		<junit.jupiter.version>5.0.1</junit.jupiter.version>
@@ -109,19 +113,19 @@
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>webgraph</artifactId>
-			<version>3.6.5</version>
+			<version>${webgraph.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>webgraph-big</artifactId>
-			<version>3.6.0</version>
+			<version>${webgraph.big.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>law</artifactId>
-			<version>2.6.2</version>
+			<version>${law.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.eclipse.jetty.aggregate</groupId>

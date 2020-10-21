@@ -27,8 +27,7 @@ export LC_ALL=C
 
 BIN=$(dirname $0)
 WG=$BIN/run_webgraph.sh
-WB=$BIN/run_webgraph_big.sh
-LW=$BIN/run_law.sh
+LW=$BIN/run_webgraph.sh
 
 source $BIN/../workflow_lib.sh
 source $BIN/webgraph_config.sh
@@ -40,19 +39,11 @@ if ! ${USE_WEBGRAPH_BIG:-false} && [ $GRAPH_SIZE_NODES -gt $((0x7ffffff7)) ]; th
     USE_WEBGRAPH_BIG=true
 fi
 if ${USE_WEBGRAPH_BIG:-false}; then
-    WG=$WB
     WGP=it.unimi.dsi.big.webgraph
 else
     WGP=it.unimi.dsi.webgraph
 fi
 
-CC_WEBGRAPH_JAR=${CC_WEBGRAPH_JAR:-target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar}
-if $JOIN_RANKS_IN_MEMORY && ! [ -e $CC_WEBGRAPH_JAR ]; then
-    echo "Jar file $CC_WEBGRAPH_JAR not found"
-    echo "Java project needs to be build by running"
-    echo "  mvn package"
-    exit 1
-fi
 
 # logging
 test -d $OUTPUTDIR/logs || mkdir $OUTPUTDIR/logs
@@ -133,12 +124,8 @@ function join_ranks_in_memory() (
     JAVA_HEAP_GB=$((($BYTES_MEM_REQUIRED/2**30)+1))
     JAVAOPTS="-Xmx${JAVA_HEAP_GB}g"
     SORTOPTS="$SORT_PARALLEL_THREADS_OPT --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
-    JAVACLASSPATH=$CC_WEBGRAPH_JAR
-    if [ -n "$CLASSPATH" ]; then
-        JAVACLASSPATH="$JAVACLASSPATH:$CLASSPATH"
-    fi
     (echo -e "$HEADER";
-     $JAVA_HOME/bin/java $JAVAOPTS -cp $JAVACLASSPATH org.commoncrawl.webgraph.JoinSortRanks $OPTS <(zcat $_VERT) $_HC $_PR -) \
+     JAVA_OPTS=$JAVA_OPTS $WG org.commoncrawl.webgraph.JoinSortRanks $OPTS <(zcat $_VERT) $_HC $_PR -) \
       | sort $SORTOPTS -t$'\t' -k1,1n --stable | gzip >$_OUT
 )
 
