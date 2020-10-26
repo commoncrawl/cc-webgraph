@@ -10,6 +10,8 @@ java -cp target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar <classname> <
 ```
 The assembly jar file requires Java 10 or upwards to run. It includes also the [WebGraph](http://webgraph.di.unimi.it/) and [LAW](http://law.di.unimi.it/software.php) packages.
 
+Note that the webgraphs are usually multiple Gigabytes in size and require a sufficient Java heap size ([Java option](https://docs.oracle.com/en/java/javase/14/docs/specs/man/java.html#extra-options-for-java) `-Xmx`) for processing.
+
 
 ## Construction and Ranking of Host- and Domain-Level Web Graphs
 
