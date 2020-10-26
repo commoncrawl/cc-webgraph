@@ -135,6 +135,22 @@
 					<groupId>com.fasterxml.jackson</groupId>
 					<artifactId>jackson-bom</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>it.unimi.di</groupId>
+					<artifactId>mg4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>it.unimi.di</groupId>
+					<artifactId>mg4j-big</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.wikidata.wdtk</groupId>
+					<artifactId>wdtk-dumpfiles</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>info.bliki.wiki</groupId>
+					<artifactId>bliki-core</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
