@@ -14,6 +14,10 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
 
+		<webgraph.version>3.6.5</webgraph.version>
+		<webgraph.big.version>3.6.0</webgraph.big.version>
+		<law.version>2.6.2</law.version>
+
 		<slf4j-api.version>1.7.25</slf4j-api.version>
 
 		<junit.jupiter.version>5.0.1</junit.jupiter.version>
@@ -102,6 +106,54 @@
 			<artifactId>commons-cli</artifactId>
 			<version>1.4</version>
 		</dependency>
+
+		<!-- WebGraph framework (http://webgraph.di.unimi.it/)
+		     and libraries from the Laboratory for Web Algorithmics
+		     (LAW - http://law.di.unimi.it/) -->
+		<dependency>
+			<groupId>it.unimi.dsi</groupId>
+			<artifactId>webgraph</artifactId>
+			<version>${webgraph.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>it.unimi.dsi</groupId>
+			<artifactId>webgraph-big</artifactId>
+			<version>${webgraph.big.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>it.unimi.dsi</groupId>
+			<artifactId>law</artifactId>
+			<version>${law.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.eclipse.jetty.aggregate</groupId>
+					<artifactId>jetty-all</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson</groupId>
+					<artifactId>jackson-bom</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>it.unimi.di</groupId>
+					<artifactId>mg4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>it.unimi.di</groupId>
+					<artifactId>mg4j-big</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.wikidata.wdtk</groupId>
+					<artifactId>wdtk-dumpfiles</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>info.bliki.wiki</groupId>
+					<artifactId>bliki-core</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
 
 		<!-- Test dependencies -->
 
