@@ -8,15 +8,16 @@
 	<packaging>jar</packaging>
 
 	<name>cc-webgraph</name>
-	<url>http://commoncrawl.org/</url>
+	<url>https://github.com/commoncrawl/cc-webgraph</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
 
-		<webgraph.version>3.6.5</webgraph.version>
-		<webgraph.big.version>3.6.0</webgraph.big.version>
-		<law.version>2.6.2</law.version>
+		<webgraph.version>3.6.10</webgraph.version>
+		<webgraph.big.version>3.6.6</webgraph.big.version>
+		<law.version>2.7.2</law.version>
+		<fastutil.version>8.5.2</fastutil.version>
 
 		<slf4j-api.version>1.7.25</slf4j-api.version>
 
@@ -98,7 +99,7 @@
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>fastutil</artifactId>
-			<version>8.4.2</version>
+			<version>${fastutil.version}</version>
 		</dependency>
 
 		<dependency>

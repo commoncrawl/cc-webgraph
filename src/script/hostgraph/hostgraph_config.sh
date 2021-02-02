@@ -11,7 +11,7 @@
 ### saved as tuples <from_host, to_host>
 
 # crawls to be processed
-CRAWLS=("CC-MAIN-2020-29" "CC-MAIN-2020-34" "CC-MAIN-2020-40")
+CRAWLS=("CC-MAIN-2020-45" "CC-MAIN-2020-50" "CC-MAIN-2021-04")
 
 # whether to include links to sitemaps contained in robots.txt files
 # Note: often links to sitemap indicate relations between domain owners.
@@ -39,7 +39,7 @@ S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2020-jul-aug-sep
+MERGE_NAME=cc-main-2020-21-oct-nov-jan
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
