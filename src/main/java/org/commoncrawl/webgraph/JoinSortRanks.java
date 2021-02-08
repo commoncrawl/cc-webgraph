@@ -14,8 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.BigArrays;
-import it.unimi.dsi.fastutil.doubles.DoubleBigArrays;
-import it.unimi.dsi.fastutil.floats.FloatBigArrays;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 import it.unimi.dsi.fastutil.io.BinIO;
@@ -173,21 +171,21 @@ public class JoinSortRanks {
 
 		public void loadHarmonicCentrality(String ranksFile) throws IOException {
 			harmonicCentralityValues = BinIO.loadFloatsBig(ranksFile);
-			long length = FloatBigArrays.length(harmonicCentralityValues);
+			long length = BigArrays.length(harmonicCentralityValues);
 			harmonicCentralityRanks = LongBigArrays.newBigArray(length);
 		}
 
 		public void loadPageRank(String ranksFile) throws IOException {
 			pageRankValues = BinIO.loadDoublesBig(ranksFile);
-			long length = DoubleBigArrays.length(pageRankValues);
+			long length = BigArrays.length(pageRankValues);
 			pageRankRanks = LongBigArrays.newBigArray(length);
 		}
 
 		private int compareHarmonicCentralityIndirect(long k1, long k2) {
-			k1 = LongBigArrays.get(indirectSortPerm, k1);
-			k2 = LongBigArrays.get(indirectSortPerm, k2);
-			float f1 = FloatBigArrays.get(harmonicCentralityValues, k1);
-			float f2 = FloatBigArrays.get(harmonicCentralityValues, k2);
+			k1 = BigArrays.get(indirectSortPerm, k1);
+			k2 = BigArrays.get(indirectSortPerm, k2);
+			float f1 = BigArrays.get(harmonicCentralityValues, k1);
+			float f2 = BigArrays.get(harmonicCentralityValues, k2);
 			// sort in reverse order, higher values first
 			if (f1 < f2) {
 				return 1;
@@ -200,10 +198,10 @@ public class JoinSortRanks {
 		}
 
 		private int comparePageRankIndirect(long k1, long k2) {
-			k1 = LongBigArrays.get(indirectSortPerm, k1);
-			k2 = LongBigArrays.get(indirectSortPerm, k2);
-			double f1 = DoubleBigArrays.get(pageRankValues, k1);
-			double f2 = DoubleBigArrays.get(pageRankValues, k2);
+			k1 = BigArrays.get(indirectSortPerm, k1);
+			k2 = BigArrays.get(indirectSortPerm, k2);
+			double f1 = BigArrays.get(pageRankValues, k1);
+			double f2 = BigArrays.get(pageRankValues, k2);
 			// sort in reverse order, higher values first
 			if (f1 < f2) {
 				return 1;
@@ -216,18 +214,18 @@ public class JoinSortRanks {
 		}
 
 		private void swapIndirect(long k1, long k2) {
-			LongBigArrays.swap(indirectSortPerm, k1, k2);
+			BigArrays.swap(indirectSortPerm, k1, k2);
 		}
 
 		private void assignRank(long[][] ranks, LongComparator comp) {
-			long length = LongBigArrays.length(ranks);
+			long length = BigArrays.length(ranks);
 			indirectSortPerm = LongBigArrays.newBigArray(length);
 			for (long i = 0; i < length; i++) {
-				LongBigArrays.set(indirectSortPerm, i, i);
+				BigArrays.set(indirectSortPerm, i, i);
 			}
 			BigArrays.quickSort(0, length, comp, this::swapIndirect);
 			for (long i = 0; i < length; ) {
-				LongBigArrays.set(ranks, LongBigArrays.get(indirectSortPerm, i), ++i);
+				BigArrays.set(ranks, BigArrays.get(indirectSortPerm, i), ++i);
 			}
 			indirectSortPerm = null;
 		}
@@ -241,19 +239,19 @@ public class JoinSortRanks {
 		}
 
 		protected float getHarmonicCentralityValue(long id) {
-			return FloatBigArrays.get(harmonicCentralityValues, id);
+			return BigArrays.get(harmonicCentralityValues, id);
 		}
 
 		protected long getHarmonicCentralityRank(long id) {
-			return LongBigArrays.get(harmonicCentralityRanks, id);
+			return BigArrays.get(harmonicCentralityRanks, id);
 		}
 
 		protected double getPageRankValue(long id) {
-			return DoubleBigArrays.get(pageRankValues, id);
+			return BigArrays.get(pageRankValues, id);
 		}
 
 		protected long getPageRankRank(long id) {
-			return LongBigArrays.get(pageRankRanks, id);
+			return BigArrays.get(pageRankRanks, id);
 		}
 
 	}

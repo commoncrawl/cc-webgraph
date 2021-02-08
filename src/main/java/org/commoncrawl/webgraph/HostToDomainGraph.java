@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import crawlercommons.domains.EffectiveTldFinder;
 import it.unimi.dsi.fastutil.Arrays;
+import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.longs.LongBigArrays;
 
 /**
@@ -260,11 +261,11 @@ public class HostToDomainGraph {
 		}
 
 		protected void setValue(long id, long value) {
-			LongBigArrays.set(ids, id, value);
+			BigArrays.set(ids, id, value);
 		}
 
 		protected long getValue(long id) {
-			return LongBigArrays.get(ids, id);
+			return BigArrays.get(ids, id);
 		}
 	}
 
