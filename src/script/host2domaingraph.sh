@@ -53,6 +53,11 @@ PARALLEL_SORT_THREADS=2
 #   To avoid this step (re-sorting billions of lines is expensive), the HostToDomainGraph
 #   class now caches potentially "missorted" candidates and processes them later together
 #   with the related subdomains / host names.
+#
+#   Note: The final sorting of the domain names is the same as if there would be
+#   a trailing dot:
+#     ac.gov.ascension-island
+#     ac.gov.ascension
 
 
 export LC_ALL=C
