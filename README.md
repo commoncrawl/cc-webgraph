@@ -8,7 +8,7 @@ The Java tools are compiled and packaged by [Maven](https://maven.apache.org/). 
 ```
 java -cp target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar <classname> <args>...
 ```
-The assembly jar file requires Java 10 or upwards to run. It includes also the [WebGraph](http://webgraph.di.unimi.it/) and [LAW](http://law.di.unimi.it/software.php) packages.
+The assembly jar file requires Java 10 or upwards to run. It includes also the [WebGraph](http://webgraph.di.unimi.it/) and [LAW](http://law.di.unimi.it/software.php) packages required to compute [PageRank](https://en.wikipedia.org/wiki/PageRank) and [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality).
 
 Note that the webgraphs are usually multiple Gigabytes in size and require a sufficient Java heap size ([Java option](https://docs.oracle.com/en/java/javase/14/docs/specs/man/java.html#extra-options-for-java) `-Xmx`) for processing.
 
@@ -42,3 +42,11 @@ the `output_dir/` should contain all generated files, eg. `graph_name.graph` and
 The shell script is easily adapted to your needs. Please refer to the [LAW dataset tutorial](http://law.di.unimi.it/tutorial.php), the [API docs of LAW](http://law.di.unimi.it/software/law-docs/index.html) and [webgraph](http://webgraph.di.unimi.it/docs/) for further information.
 
 
+## Data Sets
+
+The Common Crawl webgraph data sets are [search for announcements on the Common Crawl web site](https://commoncrawl.org/?s=webgraph)
+
+
+## Credits
+
+Thanks to the authors of the [WebGraph framework](http://webgraph.di.unimi.it/) used to process the graphs and compute page rank and harmonic centrality. See also Sebastiano Vigna's projects [webgraph](//github.com/vigna/webgraph) and [webgraph-big](//github.com/vigna/webgraph-big).
