@@ -111,4 +111,4 @@ $JAVA_HOME/bin/java -Xmx${JXMX}g -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-
      <(zcat $_EDGES) \
      >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >$OUTPUTDIR/edges.txt.gz)
 
-
+wait # for subshells to finish
