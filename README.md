@@ -42,9 +42,11 @@ the `output_dir/` should contain all generated files, eg. `graph_name.graph` and
 The shell script is easily adapted to your needs. Please refer to the [LAW dataset tutorial](http://law.di.unimi.it/tutorial.php), the [API docs of LAW](http://law.di.unimi.it/software/law-docs/index.html) and [webgraph](http://webgraph.di.unimi.it/docs/) for further information.
 
 
-## Data Sets
+## Exploring Webgraph Data Sets
 
-The Common Crawl webgraph data sets are [search for announcements on the Common Crawl web site](https://commoncrawl.org/?s=webgraph)
+The Common Crawl webgraph data sets are announced on the [Common Crawl web site](https://commoncrawl.org/?s=webgraph).
+
+Instructions how to explore the webgraphs are given in the [cc-notebooks project](//github.com/commoncrawl/cc-notebooks/tree/master/cc-webgraph-statistics).
 
 
 ## Credits
