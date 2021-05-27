@@ -55,9 +55,9 @@ if echo -e "b\na\nc" | sort --parallel=2 >/dev/null; then
     SORT_PARALLEL_THREADS_OPT="--parallel=$((($THREADS > 4) ? ($THREADS/2) : 2))"
 fi
 
-# take 10% of main memory, at least 1 GB, for sorting "chunks"
-MEM_10PERC=$(free -g | perl -ne 'do { print 1+int($1*.1), "g"; last } if /(\d+)/')
-export SORT_BUFFER_SIZE=${SORT_BUFFER_SIZE:-$MEM_10PERC}
+# take 20% of main memory, at least 1 GB, for sorting "chunks"
+MEM_20PERC=$(free -g | perl -ne 'do { print 1+int($1*.2), "g"; last } if /(\d+)/')
+export SORT_BUFFER_SIZE=${SORT_BUFFER_SIZE:-$MEM_20PERC}
 
 # max. number of merge inputs
 # (should be not less than number of vertices / edges files to be merged)
