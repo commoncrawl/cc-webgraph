@@ -17,7 +17,7 @@
 		<webgraph.version>3.6.10</webgraph.version>
 		<webgraph.big.version>3.6.6</webgraph.big.version>
 		<law.version>2.7.2</law.version>
-		<fastutil.version>8.5.4</fastutil.version>
+		<fastutil.version>8.5.6</fastutil.version>
 
 		<slf4j-api.version>1.7.25</slf4j-api.version>
 
@@ -98,7 +98,7 @@
 
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
-			<artifactId>fastutil</artifactId>
+			<artifactId>fastutil-core</artifactId>
 			<version>${fastutil.version}</version>
 		</dependency>
 

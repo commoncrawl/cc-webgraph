@@ -11,7 +11,7 @@
 ### saved as tuples <from_host, to_host>
 
 # crawls to be processed
-CRAWLS=("CC-MAIN-2021-10" "CC-MAIN-2021-17" "CC-MAIN-2021-21")
+CRAWLS=("CC-MAIN-2021-25" "CC-MAIN-2021-31" "CC-MAIN-2021-39")
 
 # whether to include links to sitemaps contained in robots.txt files
 # Note: often links to sitemap indicate relations between domain owners.
@@ -24,7 +24,7 @@ CONSTRUCT_HOSTGRAPH=false
 # - splits hostlink extraction into multiple jobs
 # - output is checkpointed on S3 after each job
 #   (useful if cluster runs on spot instances)
-MAX_INPUT_SIZE=45000
+MAX_INPUT_SIZE=56000
 
 # hdfs:// directory where input and output is kept
 HDFS_BASE_DIR=hdfs:///user/ubuntu/webgraph
@@ -39,7 +39,7 @@ S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2021-feb-apr-may
+MERGE_NAME=cc-main-2021-jun-jul-sep
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
@@ -57,7 +57,7 @@ MERGE_INPUT=()
 # temporary directory
 # - must exist on task/compute nodes for buffering data
 # - should provide several GBs of free space
-TMPDIR=/data/1/tmp
+TMPDIR=/data/0/tmp
 
 # where to keep logs for steps
 LOGDIR=$PWD
