@@ -199,6 +199,7 @@ for CRAWL in ${CRAWLS[@]}; do
               --py-files sparkcc.py \
               $SPARK_EXTRA_OPTS \
               ./wat_extract_links.py \
+              --input_base_url $INPUT_BASE_URL \
               --num_input_partitions $INPUT_PARTITIONS \
               --num_output_partitions $OUTPUT_PARTITIONS \
               --local_temp_dir $TMPDIR \

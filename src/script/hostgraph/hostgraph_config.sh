@@ -13,6 +13,8 @@
 # crawls to be processed
 CRAWLS=("CC-MAIN-2021-43" "CC-MAIN-2021-49" "CC-MAIN-2022-05")
 
+INPUT_BASE_URL="s3://commoncrawl/"
+
 # whether to include links to sitemaps contained in robots.txt files
 # Note: often links to sitemap indicate relations between domain owners.
 INCLUDE_ROBOTSTXT_SITEMAP_LINKS=true
@@ -89,42 +91,52 @@ case "$EXECUTOR_CONFIG" in
     c[3456]*.xlarge )
         EXECUTOR_CORES=3
         EXECUTOR_MEM=5g
+        NODEMANAGER_MEM_MB=$((6*1024))
         ;;
     c[3456]*.2xlarge )
         EXECUTOR_CORES=6
         EXECUTOR_MEM=10g
+        NODEMANAGER_MEM_MB=$((11*1024))
         ;;
     c[3456]*.4xlarge )
         EXECUTOR_CORES=12
         EXECUTOR_MEM=22g
+        NODEMANAGER_MEM_MB=$((24*1024))
         ;;
     r[3456]*.xlarge )
         EXECUTOR_CORES=3
         EXECUTOR_MEM=23g
+        NODEMANAGER_MEM_MB=$((24*1024))
         ;;
     r[3456]*.2xlarge )
         EXECUTOR_CORES=6
         EXECUTOR_MEM=46g
+        NODEMANAGER_MEM_MB=$((48*1024))
         ;;
     r[3456]*.4xlarge )
         EXECUTOR_CORES=12
         EXECUTOR_MEM=94g
+        NODEMANAGER_MEM_MB=$((96*1024))
         ;;
     r[3456]*.8xlarge )
         EXECUTOR_CORES=24
         EXECUTOR_MEM=190g
+        NODEMANAGER_MEM_MB=$((192*1024))
         ;;
     m[3456]*.2xlarge )
         EXECUTOR_CORES=8
         EXECUTOR_MEM=23g
+        NODEMANAGER_MEM_MB=$((24*1024))
         ;;
     m[3456]*.4xlarge )
         EXECUTOR_CORES=16
         EXECUTOR_MEM=46g
+        NODEMANAGER_MEM_MB=$((48*1024))
         ;;
     m[3456]*.8xlarge )
         EXECUTOR_CORES=32
         EXECUTOR_MEM=94g
+        NODEMANAGER_MEM_MB=$((98*1024))
         ;;
     "custom" )
         if [ -z "$EXECUTOR_CORES" ] || [ -z "$EXECUTOR_MEM" ]; then
@@ -136,6 +148,8 @@ case "$EXECUTOR_CONFIG" in
         echo "No valid executor configuration: '$EXECUTOR_CONFIG'" >&2
         exit 1
 esac
+
+SPARK_EXTRA_OPTS="$SPARK_EXTRA_OPTS --conf spark.yarn.nodemanager.resource.memory-mb=$NODEMANAGER_MEM_MB"
 
 OUTPUT_PARTITIONS=$(($NUM_EXECUTORS*$EXECUTOR_CORES/2))
 WEBGRAPH_EDGE_PARTITIONS=$(($NUM_EXECUTORS*$EXECUTOR_CORES/2))
