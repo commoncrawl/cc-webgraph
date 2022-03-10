@@ -11,7 +11,7 @@
 ### saved as tuples <from_host, to_host>
 
 # crawls to be processed
-CRAWLS=("CC-MAIN-2021-25" "CC-MAIN-2021-31" "CC-MAIN-2021-39")
+CRAWLS=("CC-MAIN-2021-43" "CC-MAIN-2021-49" "CC-MAIN-2022-05")
 
 # whether to include links to sitemaps contained in robots.txt files
 # Note: often links to sitemap indicate relations between domain owners.
@@ -39,7 +39,7 @@ S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2021-jun-jul-sep
+MERGE_NAME=cc-main-2021-22-oct-nov-jan
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
@@ -86,33 +86,45 @@ EXECUTOR_CONFIG=${EXECUTOR_CONFIG:-"r5.xlarge"}
 
 
 case "$EXECUTOR_CONFIG" in
-    c[345]*.xlarge )
+    c[3456]*.xlarge )
         EXECUTOR_CORES=3
         EXECUTOR_MEM=5g
         ;;
-    c[345]*.2xlarge )
+    c[3456]*.2xlarge )
         EXECUTOR_CORES=6
         EXECUTOR_MEM=10g
         ;;
-    c[345]*.4xlarge )
+    c[3456]*.4xlarge )
         EXECUTOR_CORES=12
         EXECUTOR_MEM=22g
         ;;
-    r[345]*.xlarge )
+    r[3456]*.xlarge )
         EXECUTOR_CORES=3
         EXECUTOR_MEM=23g
         ;;
-    r[345]*.2xlarge )
+    r[3456]*.2xlarge )
         EXECUTOR_CORES=6
         EXECUTOR_MEM=46g
         ;;
-    r[345]*.4xlarge )
+    r[3456]*.4xlarge )
         EXECUTOR_CORES=12
         EXECUTOR_MEM=94g
         ;;
-    r[345]*.8xlarge )
+    r[3456]*.8xlarge )
         EXECUTOR_CORES=24
         EXECUTOR_MEM=190g
+        ;;
+    m[3456]*.2xlarge )
+        EXECUTOR_CORES=8
+        EXECUTOR_MEM=23g
+        ;;
+    m[3456]*.4xlarge )
+        EXECUTOR_CORES=16
+        EXECUTOR_MEM=46g
+        ;;
+    m[3456]*.8xlarge )
+        EXECUTOR_CORES=32
+        EXECUTOR_MEM=94g
         ;;
     "custom" )
         if [ -z "$EXECUTOR_CORES" ] || [ -z "$EXECUTOR_MEM" ]; then
