@@ -198,6 +198,7 @@ else
     # if low memory, add
     # --offline, combined with
     # -Djava.io.tmpdir=... to point to a temporary directory with free space 2 times the graph size
+    #     (see also run_webgraph.sh)
     _step transpose \
           $WG $WGP.Transform transpose $FULLNAME $FULLNAME-t
 fi

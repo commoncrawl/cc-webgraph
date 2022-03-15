@@ -23,6 +23,9 @@ if ! echo "$JAVA_OPTS" | grep -qE -e "-Xmx[0-9]+"; then
     JAVA_OPTS="$JAVA_OPTS -Xmx${MEMMB}m"
 fi
 
+if [ -n "$TMPDIR" ]; then
+    JAVA_OPTS="$JAVA_OPTS -Djava.io.tmpdir=$TMPDIR"
+fi
 
 case "$1" in
     it.unimi.dsi.webgraph.algo.HyperBall \
