@@ -106,7 +106,7 @@ function dump_upload_text() (
     else
         zcat output/$NAME/hostgraph/tmp_vertices/*.gz | gzip >output/$NAME/hostgraph/vertices.txt.gz
     fi
-    aws s3 cp output/$NAME/hostgraph/vertices.txt.gz $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/ --acl public-read
+    aws s3 cp output/$NAME/hostgraph/vertices.txt.gz $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/
     hadoop fs -copyToLocal $HDFS_BASE_DIR/text/$NAME/edges/*.gz output/$NAME/hostgraph/tmp_edges/
     sort_input=""
     for e in output/$NAME/hostgraph/tmp_edges/*.gz; do
@@ -114,7 +114,7 @@ function dump_upload_text() (
     done
     mkdir -p tmp
     eval "sort --batch-size 96 --buffer-size 4g --parallel 2 --temporary-directory ./tmp/ --compress-program=gzip -t$'\t' -k1,1n -k2,2n --stable --merge $sort_input | gzip >output/$NAME/hostgraph/edges.txt.gz"
-    aws s3 cp output/$NAME/hostgraph/edges.txt.gz    $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/ --acl public-read
+    aws s3 cp output/$NAME/hostgraph/edges.txt.gz    $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/
 )
 
 function create_input_splits() {
@@ -122,15 +122,12 @@ function create_input_splits() {
     if ! [ -d input/$CRAWL/ ]; then
         mkdir -p input/$CRAWL
         cd input/$CRAWL
-        wget https://commoncrawl.s3.amazonaws.com/crawl-data/$CRAWL/wat.paths.gz
-        wget https://commoncrawl.s3.amazonaws.com/crawl-data/$CRAWL/non200responses.paths.gz
+        aws s3 cp s3://commoncrawl/crawl-data/$CRAWL/wat.paths.gz .
+        aws s3 cp s3://commoncrawl/crawl-data/$CRAWL/non200responses.paths.gz .
         if $INCLUDE_ROBOTSTXT_SITEMAP_LINKS; then
-            wget https://commoncrawl.s3.amazonaws.com/crawl-data/$CRAWL/robotstxt.paths.gz
+            aws s3 cp s3://commoncrawl/crawl-data/$CRAWL/robotstxt.paths.gz .
         fi
-        zcat *.paths.gz \
-            | shuf \
-            | perl -lne 'print "s3://commoncrawl/", $_' \
-                   >input.txt
+        zcat *.paths.gz | shuf >input.txt
         NUM_INPUT_PATHS=$(cat input.txt | wc -l)
         NUM_SPLITS=$((1+$NUM_INPUT_PATHS/$MAX_INPUT_SIZE))
         if [ $NUM_SPLITS -gt 0 ]; then
