@@ -164,8 +164,10 @@ function create_input_splits() {
 
 MERGE_CRAWL_INPUT=""
 
-HOST_LINK_EXTRACTOR=./wat_extract_links.py
-PYFILES_HOST_LINK_EXTRACTOR="sparkcc.py"
+#HOST_LINK_EXTRACTOR=./wat_extract_links.py
+#PYFILES_HOST_LINK_EXTRACTOR="sparkcc.py"
+HOST_LINK_EXTRACTOR=./hostlinks_extract_fastwarc.py
+PYFILES_HOST_LINK_EXTRACTOR="sparkcc.py,sparkcc_fastwarc.py,wat_extract_links.py"
 
 for CRAWL in ${CRAWLS[@]}; do
 
