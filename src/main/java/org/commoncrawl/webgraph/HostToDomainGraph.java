@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2022 Common Crawl and contributors
+ */
 package org.commoncrawl.webgraph;
 
 import java.io.IOException;
@@ -7,7 +11,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Stack;
+import java.util.TreeMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -31,10 +36,26 @@ import it.unimi.dsi.fastutil.longs.LongBigArrays;
  * </dl>
  * Host or domain names are reversed (<code>www.example.com</code> is written as
  * <code>com.example.www</code>). The vertices file is sorted lexicographically
- * by reversed host name, IDs (0,1,...,n) are assigned in this sort order. The
- * edges file is sorted numerically first by fromId, second by toId. These
+ * by host name in
+ * <a href="https://en.wikipedia.org/wiki/Reverse_domain_name_notation">reverse
+ * domain name notation</a>. IDs (0,1,...,n) are assigned in this sort order.
+ * The edges file is sorted numerically first by fromId, second by toId. These
  * sorting restrictions allow to convert large host graphs with acceptable
- * memory requirements (number of hosts &times; 4 bytes).
+ * memory requirements (number of hosts &times; 4 bytes plus some memory to
+ * queue domains unless all hosts under this domain are processed).
+ * 
+ * Notes, assumptions and preconditions:
+ * <ul>
+ * <li>host nodes must be sorted lexicographically by reversed host name, see
+ * above</li>
+ * <li>the host-domain map is hold as array. To overcome Java's max array size
+ * (approx. 2^32), {@link HostToDomainGraphBig} (based on fastutils'
+ * {@link BigArrays}) is automatically used if the array size limit is hit.</li>
+ * <li>the number of resulting domains is limited by Java's max. array size.
+ * This shouldn't be a problem.</li>
+ * <li>also the number of hosts per domain is limited by Java's max. array
+ * size</li>
+ * </ul>
  */
 public class HostToDomainGraph {
 
@@ -44,37 +65,120 @@ public class HostToDomainGraph {
 	protected boolean privateDomains = false;
 	protected boolean strictDomainValidate = true;
 
+	protected long maxSize;
 	private int[] ids;
 	protected long currentId = -1;
-	protected Domain lastDomain = null;
 	protected long lastFromId = -1;
 	protected long lastToId = -1;
-	protected Stack<Domain> domainStack = new Stack<>();
+	private long numInputLinesNodes = 0;
+	protected String lastRevHost = null;
+	protected Domain lastDomain = null;
+	private TreeMap<String, Domain> domainQueue = new TreeMap<>();
+	private int maxQueueUsed = 0;
 
 	private static Pattern SPLIT_HOST_PATTERN = Pattern.compile("\\.");
 
-	protected static class Domain {
+	/**
+	 * Representation of a domain as a result of folding one or more host names to a
+	 * domain name. Holds all information for the given domain to convert host
+	 * vertices and associated edges into a domain graph.
+	 */
+	protected static class Domain implements Comparable<Domain> {
+		final static char HYPHEN = '-';
+		final static char DOT = '.';
 		String name;
 		String revName;
 		long id;
 		long numberOfHosts;
 		List<Long> ids = new ArrayList<>();
-		public Domain(String name, long id, long numberOfHosts) {
+
+		public Domain(String name, String revName, long id, long numberOfHosts) {
 			this.name = name;
-			this.revName = reverseHost(name);
+			this.revName = revName;
 			this.id = id;
 			this.numberOfHosts = numberOfHosts;
 		}
+
+		public Domain(String name, long id, long numberOfHosts) {
+			this(name, reverseHost(name), id, numberOfHosts);
+		}
+
 		public Domain(String name) {
 			this(name, -1, 0);
 		}
+
+		public Domain(String name, String revName) {
+			this(name, revName, -1, 0);
+		}
+
 		public Domain(String name, long hostId) {
 			this(name, -1, 0);
 			add(hostId);
 		}
+
 		public void add(long hostId) {
 			ids.add(hostId);
 			numberOfHosts++;
+		}
+
+		@Override
+		public String toString() {
+			return name;
+		}
+
+		@Override
+		public int compareTo(Domain o) {
+			return revName.compareTo(o.revName);
+		}
+
+		/**
+		 * Whether the domain is safe to output given the reversed domain name seen
+		 * next.
+		 */
+		public boolean isSafeToOutput(String nextDomainRevName) {
+			return isSafeToOutput(this.revName, nextDomainRevName);
+		}
+
+		public static boolean isSafeToOutput(String domainRevName, String nextDomainRevName) {
+			return compareRevDomainsSafe(domainRevName, nextDomainRevName) < 0;
+		}
+
+		public static int compareRevDomainsSafe(String d1, String d2) {
+			int l1 = d1.length();
+			int l2 = d2.length();
+			int l = Math.min(l1, l2);
+			for (int i = 0; i < l; i++) {
+				char c1 = d1.charAt(i);
+				char c2 = d2.charAt(i);
+				if (c1 != c2) {
+					return c1 - c2;
+				} else if (c1 == HYPHEN) {
+					/*
+					 * cannot finish "org.example-domain" unless "org.example" is done
+					 */
+					return 0;
+				}
+			}
+			if (l1 == l2) {
+				return 0;
+			}
+			if (l1 > l2) {
+				char c1 = d1.charAt(l2);
+				switch (c1) {
+				case HYPHEN:
+					/*
+					 * cannot finish "org.example-domain" unless "org.example" is done
+					 */
+				case DOT:
+					// cannot finish "tld.suffix.suffix2.domain" unless "tld.suffix" is done
+					return 1;
+				}
+				return c1 - DOT;
+			}
+			char c2 = d2.charAt(l1);
+			if (c2 == HYPHEN || c2 == DOT)
+				return 1;
+			return DOT - c2;
 		}
 	}
 
@@ -82,6 +186,7 @@ public class HostToDomainGraph {
 	}
 
 	public HostToDomainGraph(int maxSize) {
+		this.maxSize = maxSize;
 		ids = new int[maxSize];
 	}
 
@@ -92,17 +197,17 @@ public class HostToDomainGraph {
 	public void doPrivateDomains(boolean privateDomains) {
 		this.privateDomains = privateDomains;
 	}
+
 	public void setStrictDomainValidate(boolean strict) {
 		this.strictDomainValidate = strict;
 	}
 
-
 	public static String reverseHost(String revHost) {
 		String[] rev = SPLIT_HOST_PATTERN.split(revHost);
-		for (int i = 0; i < (rev.length/2); i++) {
-		    String temp = rev[i];
-		    rev[i] = rev[rev.length - i - 1];
-		    rev[rev.length - i - 1] = temp;
+		for (int i = 0; i < (rev.length / 2); i++) {
+			String temp = rev[i];
+			rev[i] = rev[rev.length - i - 1];
+			rev[rev.length - i - 1] = temp;
 		}
 		return String.join(".", rev);
 	}
@@ -116,12 +221,22 @@ public class HostToDomainGraph {
 	}
 
 	public String convertNode(String line) {
+		numInputLinesNodes++;
 		int sep = line.indexOf('\t');
 		if (sep == -1) {
+			LOG.warn("Skipping invalid line: <{}>", line);
 			return "";
 		}
 		long id = Long.parseLong(line.substring(0, sep));
-		String revHost = line.substring(sep+1);
+		String revHost = line.substring(sep + 1);
+		if (lastRevHost != null) {
+			if (lastRevHost.compareTo(revHost) >= 0) {
+				String msg = "Reversed host names in input are not properly sorted: " + lastRevHost + " <> " + revHost;
+				LOG.error(msg);
+				throw new RuntimeException(msg);
+			}
+		}
+		lastRevHost = revHost;
 		String host = reverseHost(revHost);
 		String domain = EffectiveTldFinder.getAssignedDomain(host, true, !privateDomains);
 		StringBuilder sb = new StringBuilder();
@@ -135,61 +250,59 @@ public class HostToDomainGraph {
 			LOG.warn("No domain for host: {}", host);
 			setValue(id, -1);
 			return null;
-		} else if (lastDomain == null) {
-			// must start next domain
-			lastDomain = new Domain(domain, id);
-			return null;
-		} else if (domain.equals(lastDomain.name)) {
+		}
+		if (lastDomain != null && domain.equals(lastDomain.name)) {
+			// short cut for the common case many subsequent subdomains of the same domain
 			lastDomain.add(id);
 			return null;
-		} else if (isHyphenPrefix(lastDomain.revName, revHost)) {
-			LOG.info("Found misordered domain name (containing hyphen): {} before {} in {}",
-					reverseHost(lastDomain.name), reverseHost(domain), revHost);
-			domainStack.push(lastDomain);
-			lastDomain = new Domain(domain, id);
-			return null;
-		} else if (domainStack.size() > 0) {
-			String revDomain = revHost.substring(0, domain.length());
-			while (domainStack.size() > 0) {
-				// restore lastDomain(s) from stack and assign Id now
-				Domain top = domainStack.peek();
-				int c = top.revName.compareTo(revDomain);
-				if (c < 0 && isHyphenPrefix(top.revName, revDomain)) {
-					// do not ship out top because top is a "hyphen"-prefix of domain
-					c = 999;
-				} else if (c > 0 && isHyphenPrefix(revDomain, top.revName)) {
-					// must ship out top since current domain is a "hyphen"-prefix of top
-					c = -999;
-				}
-				if (c <= 0 && lastDomain != null) {
-					lastDomain.id = ++currentId;
-					getNodeLine(sb, lastDomain);
-					lastDomain = null;
-				}
-				if (c == 0) {
-					lastDomain = domainStack.pop();
-					lastDomain.add(id);
-					return sb.toString();
-				} else if (c < 0) {
-					domainStack.pop();
-					top.id = ++currentId;
-					getNodeLine(sb, top);
-				} else {
-					break;
-				}
-			}
 		}
+		lastDomain = queueDomain(sb, domain);
 		if (lastDomain != null) {
-			lastDomain.id = ++currentId;
-			getNodeLine(sb, lastDomain);
+			lastDomain.add(id);
 		}
-		lastDomain = new Domain(domain, id);
+		if (sb.length() == 0) {
+			return null;
+		}
 		return sb.toString();
 	}
 
-	private static boolean isHyphenPrefix(String revDomainA, String revDomainB) {
-		return revDomainB.length() > revDomainA.length() && revDomainB.charAt(revDomainA.length()) == '-'
-				&& revDomainB.startsWith(revDomainA);
+	/**
+	 * Add the domain name to the queue if it is not already queued. Flush the
+	 * queue, assuming properly sorted input.
+	 * 
+	 * @param sb         domains which are safe to print are added to this
+	 *                   StringBuilder.
+	 * @param domainName domain name to be queued
+	 * @return the queued domain object
+	 */
+	private Domain queueDomain(StringBuilder sb, String domainName) {
+		String revDomainName = reverseHost(domainName);
+		Domain domain = null;
+		// first, poll all queued domains safe to output
+		while (!domainQueue.isEmpty()) {
+			String firstDomain = domainQueue.firstKey();
+			if (!Domain.isSafeToOutput(firstDomain, revDomainName)) {
+				/*
+				 * queued domains are sorted lexicographically: if the first/current domain
+				 * cannot be safely dequeued and written to output, this is also the case for
+				 * the following ones.
+				 */
+				break;
+			}
+			Domain d = domainQueue.pollFirstEntry().getValue();
+			d.id = ++currentId;
+			getNodeLine(sb, d);
+		}
+		if (domainQueue.containsKey(revDomainName)) {
+			domain = domainQueue.get(revDomainName);
+		} else {
+			domain = new Domain(domainName);
+			domainQueue.put(revDomainName, domain);
+			if (domainQueue.size() > maxQueueUsed) {
+				maxQueueUsed = domainQueue.size();
+			}
+		}
+		return domain;
 	}
 
 	private String getNodeLine(Domain domain) {
@@ -199,7 +312,8 @@ public class HostToDomainGraph {
 	}
 
 	private void getNodeLine(StringBuilder b, Domain domain) {
-		if (domain == null) return;
+		if (domain == null)
+			return;
 		if (domain.id >= 0 && domain.name != null) {
 			if (b.length() > 0) {
 				b.append('\n');
@@ -223,11 +337,10 @@ public class HostToDomainGraph {
 			return "";
 		}
 		long fromId = Long.parseLong(line.substring(0, sep));
-		long toId = Long.parseLong(line.substring(sep+1));
+		long toId = Long.parseLong(line.substring(sep + 1));
 		fromId = getValue(fromId);
 		toId = getValue(toId);
-		if (fromId == toId || fromId == -1 || toId == -1
-				|| (lastFromId == fromId && lastToId == toId)) {
+		if (fromId == toId || fromId == -1 || toId == -1 || (lastFromId == fromId && lastToId == toId)) {
 			return null;
 		}
 		lastFromId = fromId;
@@ -236,20 +349,23 @@ public class HostToDomainGraph {
 	}
 
 	public void convert(Function<String, String> func, Stream<String> in, PrintStream out) {
-        in.map(func).filter(Objects::nonNull).forEach(out::println);
+		in.map(func).filter(Objects::nonNull).forEach(out::println);
 	}
 
-	private void finishNodes(PrintStream out) {
-		while (domainStack.size() > 0) {
-			Domain domain = domainStack.pop();
+	public void convert(Function<String, String> func, Stream<String> in, PrintStream out,
+			Consumer<? super String> reporter) {
+		convert(func, in.peek(reporter), out);
+	}
+
+	public void finishNodes(PrintStream out) {
+		for (Domain domain : domainQueue.values()) {
 			domain.id = ++currentId;
 			out.println(getNodeLine(domain));
 		}
-		if (lastDomain != null) {
-			lastDomain.id = ++currentId;
-			out.println(getNodeLine(lastDomain));
-		}
-		LOG.info("Number of nodes: {}", currentId + 1);
+		domainQueue.clear();
+		LOG.info("Number of input lines: {}", numInputLinesNodes);
+		LOG.info("Number of domain nodes: {}", currentId + 1);
+		LOG.info("Max. domain queue usage: {}", maxQueueUsed);
 	}
 
 	public static class HostToDomainGraphBig extends HostToDomainGraph {
@@ -257,6 +373,7 @@ public class HostToDomainGraph {
 		private long[][] ids;
 
 		public HostToDomainGraphBig(long maxSize) {
+			this.maxSize = maxSize;
 			ids = LongBigArrays.newBigArray(maxSize);
 		}
 
@@ -303,9 +420,9 @@ public class HostToDomainGraph {
 		}
 		long maxSize = 0;
 		try {
-			maxSize = Long.parseLong(args[argpos+0]);
+			maxSize = Long.parseLong(args[argpos + 0]);
 		} catch (NumberFormatException e) {
-			LOG.error("Invalid number: " + args[argpos+0]);
+			LOG.error("Invalid number: " + args[argpos + 0]);
 			System.exit(1);
 		}
 		HostToDomainGraph converter;
@@ -316,8 +433,8 @@ public class HostToDomainGraph {
 		}
 		converter.doCount(countHosts);
 		converter.setStrictDomainValidate(!noStrictDomainValidate);
-		String nodesIn = args[argpos+1];
-		String nodesOut = args[argpos+2];
+		String nodesIn = args[argpos + 1];
+		String nodesOut = args[argpos + 2];
 		try (Stream<String> in = Files.lines(Paths.get(nodesIn));
 				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(nodesOut)))) {
 			converter.convert(converter::convertNode, in, out);
@@ -327,8 +444,8 @@ public class HostToDomainGraph {
 			LOG.error("Failed to read nodes from " + nodesIn);
 			System.exit(1);
 		}
-		String edgesIn = args[argpos+3];
-		String edgesOut = args[argpos+4];
+		String edgesIn = args[argpos + 3];
+		String edgesOut = args[argpos + 4];
 		try (Stream<String> in = Files.lines(Paths.get(edgesIn));
 				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(edgesOut)))) {
 			converter.convert(converter::convertEdge, in, out);
