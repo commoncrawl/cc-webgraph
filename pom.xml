@@ -15,14 +15,14 @@
 		<java.version>1.8</java.version>
 
 		<webgraph.version>3.6.10</webgraph.version>
-		<webgraph.big.version>3.6.6</webgraph.big.version>
+		<webgraph.big.version>3.7.0</webgraph.big.version>
 		<law.version>2.7.2</law.version>
 		<fastutil.version>8.5.8</fastutil.version>
+		<crawler.commons.version>1.3</crawler.commons.version>
 
-		<slf4j-api.version>1.7.36</slf4j-api.version>
+		<slf4j-api.version>2.0.0</slf4j-api.version>
 
-		<junit.jupiter.version>5.8.2</junit.jupiter.version>
-		<junit.platform.version>1.3.2</junit.platform.version>
+		<junit.version>5.9.0</junit.version>
 	</properties>
 
 	<build>
@@ -39,26 +39,6 @@
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.0</version>
-				<configuration>
-					<includes>
-						<include>**/Test*.java</include>
-						<include>**/*Test.java</include>
-					</includes>
-					<properties>
-						<excludeTags>performance</excludeTags>
-					</properties>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.junit.platform</groupId>
-						<artifactId>junit-platform-surefire-provider</artifactId>
-						<version>${junit.platform.version}</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -78,9 +58,26 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.0.0-M6</version>
+			</plugin>
 		</plugins>
 	</build>
 
+
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
+				<version>${junit.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 
@@ -93,7 +90,7 @@
 		<dependency>
 			<groupId>com.github.crawler-commons</groupId>
 			<artifactId>crawler-commons</artifactId>
-			<version>1.2</version>
+			<version>${crawler.commons.version}</version>
 		</dependency>
 
 		<dependency>
@@ -108,9 +105,9 @@
 			<version>1.5.0</version>
 		</dependency>
 
-		<!-- WebGraph framework (http://webgraph.di.unimi.it/)
+		<!-- WebGraph framework (https://webgraph.di.unimi.it/)
 		     and libraries from the Laboratory for Web Algorithmics
-		     (LAW - http://law.di.unimi.it/) -->
+		     (LAW - https://law.di.unimi.it/) -->
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>webgraph</artifactId>
@@ -168,17 +165,14 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-configuration2</artifactId>
-			<version>2.7</version>
+			<version>2.8.0</version>
 			<scope>runtime</scope>
 		</dependency>
 
-
 		<!-- Test dependencies -->
-
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<version>${junit.jupiter.version}</version>
+			<artifactId>junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
 
