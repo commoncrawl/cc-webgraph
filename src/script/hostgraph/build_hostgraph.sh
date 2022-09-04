@@ -22,8 +22,8 @@ set -x
 #      .../build_hostgraph.sh
 
 # Note: the script is tested using a Hadoop cluster running
-# Cloudera CDH 6.3.1 on Ubuntu 18.04. You may need to adapt it
-# to run on different setups.
+# Apache Bigtop 3.x on Ubuntu 20.04. You may need to adapt it
+# to run on different Hadoop distributions.
 
 
 SPARK_ON_YARN="--master yarn"
@@ -106,7 +106,7 @@ function dump_upload_text() (
     else
         zcat output/$NAME/hostgraph/tmp_vertices/*.gz | gzip >output/$NAME/hostgraph/vertices.txt.gz
     fi
-    aws s3 cp output/$NAME/hostgraph/vertices.txt.gz $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/
+    aws s3 cp --no-progress output/$NAME/hostgraph/vertices.txt.gz $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/
     hadoop fs -copyToLocal $HDFS_BASE_DIR/text/$NAME/edges/*.gz output/$NAME/hostgraph/tmp_edges/
     sort_input=""
     for e in output/$NAME/hostgraph/tmp_edges/*.gz; do
@@ -114,7 +114,7 @@ function dump_upload_text() (
     done
     mkdir -p tmp
     eval "sort --batch-size 96 --buffer-size 4g --parallel 2 --temporary-directory ./tmp/ --compress-program=gzip -t$'\t' -k1,1n -k2,2n --stable --merge $sort_input | gzip >output/$NAME/hostgraph/edges.txt.gz"
-    aws s3 cp output/$NAME/hostgraph/edges.txt.gz    $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/
+    aws s3 cp --no-progress output/$NAME/hostgraph/edges.txt.gz    $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/
 )
 
 function create_input_splits() {
@@ -122,10 +122,10 @@ function create_input_splits() {
     if ! [ -d input/$CRAWL/ ]; then
         mkdir -p input/$CRAWL
         cd input/$CRAWL
-        aws s3 cp s3://commoncrawl/crawl-data/$CRAWL/wat.paths.gz .
-        aws s3 cp s3://commoncrawl/crawl-data/$CRAWL/non200responses.paths.gz .
+        aws s3 cp --quiet --no-progress s3://commoncrawl/crawl-data/$CRAWL/wat.paths.gz .
+        aws s3 cp --quiet --no-progress s3://commoncrawl/crawl-data/$CRAWL/non200responses.paths.gz .
         if $INCLUDE_ROBOTSTXT_SITEMAP_LINKS; then
-            aws s3 cp s3://commoncrawl/crawl-data/$CRAWL/robotstxt.paths.gz .
+            aws s3 cp --quiet --no-progress s3://commoncrawl/crawl-data/$CRAWL/robotstxt.paths.gz .
         fi
         zcat *.paths.gz | shuf >input.txt
         NUM_INPUT_PATHS=$(cat input.txt | wc -l)
@@ -164,6 +164,9 @@ function create_input_splits() {
 
 MERGE_CRAWL_INPUT=""
 
+HOST_LINK_EXTRACTOR=./wat_extract_links.py
+PYFILES_HOST_LINK_EXTRACTOR="sparkcc.py"
+
 for CRAWL in ${CRAWLS[@]}; do
 
     INPUT_SPLITS=($(create_input_splits $CRAWL))
@@ -193,9 +196,9 @@ for CRAWL in ${CRAWLS[@]}; do
               --executor-memory $EXECUTOR_MEM \
               --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR/$CRAWL \
               --conf spark.sql.parquet.compression.codec=gzip \
-              --py-files sparkcc.py \
+              --py-files "$PYFILES_HOST_LINK_EXTRACTOR" \
               $SPARK_EXTRA_OPTS \
-              ./wat_extract_links.py \
+              $HOST_LINK_EXTRACTOR \
               --input_base_url $INPUT_BASE_URL \
               --num_input_partitions $INPUT_PARTITIONS \
               --num_output_partitions $OUTPUT_PARTITIONS \
@@ -236,8 +239,7 @@ for CRAWL in ${CRAWLS[@]}; do
               $SPARK_HOME/bin/spark-submit \
               $SPARK_ON_YARN \
               $SPARK_HADOOP_OPTS \
-              --py-files sparkcc.py \
-              --py-files iana_tld.py \
+              --py-files sparkcc.py,iana_tld.py \
               --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
               --conf spark.task.maxFailures=10 \
               --conf spark.executor.memory=$EXECUTOR_MEM \
@@ -294,8 +296,7 @@ if [ -n "MERGE_NAME" ]; then
       $SPARK_HOME/bin/spark-submit \
         $SPARK_ON_YARN \
         $SPARK_HADOOP_OPTS \
-        --py-files sparkcc.py \
-        --py-files iana_tld.py \
+        --py-files sparkcc.py,iana_tld.py \
         --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
         --conf spark.task.maxFailures=10 \
         --conf spark.executor.memory=$EXECUTOR_MEM \

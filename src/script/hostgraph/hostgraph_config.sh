@@ -8,10 +8,11 @@
 ### Exctraction of inter-host links from
 ###  - WAT files and
 ###  - non-200 responses WARC files for redirects
+###  - (optionally) sitemap directives in robots.txt files
 ### saved as tuples <from_host, to_host>
 
 # crawls to be processed
-CRAWLS=("CC-MAIN-2021-43" "CC-MAIN-2021-49" "CC-MAIN-2022-05")
+CRAWLS=("CC-MAIN-2022-21" "CC-MAIN-2022-27" "CC-MAIN-2022-33")
 
 INPUT_BASE_URL="s3://commoncrawl/"
 
@@ -41,7 +42,7 @@ S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2021-22-oct-nov-jan
+MERGE_NAME=cc-main-2022-may-jun-aug
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
@@ -88,17 +89,17 @@ EXECUTOR_CONFIG=${EXECUTOR_CONFIG:-"r5.xlarge"}
 
 
 case "$EXECUTOR_CONFIG" in
-    c[3456]*.xlarge )
+    c[34567]*.xlarge )
         EXECUTOR_CORES=3
         EXECUTOR_MEM=5g
         NODEMANAGER_MEM_MB=$((6*1024))
         ;;
-    c[3456]*.2xlarge )
+    c[34567]*.2xlarge )
         EXECUTOR_CORES=6
         EXECUTOR_MEM=10g
         NODEMANAGER_MEM_MB=$((11*1024))
         ;;
-    c[3456]*.4xlarge )
+    c[34567]*.4xlarge )
         EXECUTOR_CORES=12
         EXECUTOR_MEM=22g
         NODEMANAGER_MEM_MB=$((24*1024))
