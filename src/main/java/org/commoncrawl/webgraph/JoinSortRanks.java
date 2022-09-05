@@ -22,8 +22,8 @@ import it.unimi.dsi.fastutil.longs.LongComparator;
 
 
 /**
- * Assign ranks to harmonic centrality and page rank values, and join ranks with
- * node names.
+ * Assign ranks to harmonic centrality and page rank values, join ranks with
+ * node names and sort by decreasing harmonic centrality rank/score.
  * 
  * Sorting and joining is done in memory. For a graph with <i>n</i> nodes, the
  * required memory is 24 * <i>n</i> bytes, resp. 36 * <i>n</i> bytes if <i>n</i>
