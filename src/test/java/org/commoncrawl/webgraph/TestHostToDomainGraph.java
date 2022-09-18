@@ -69,6 +69,18 @@ class TestHostToDomainGraph {
 			"7\tac.gov.conservation-ascension-island\t1", //
 			"8\tac.gov.postoffice\t1", //
 	};
+	String[] domainGraphHyphenatedDomainsInclMultiPartSuffixes = { //
+			"0\tac.e\t1", //
+			"1\tac.e-bike\t1", //
+			"2\tac.e-bikes\t1", //
+			"3\tac.e-com\t1", //
+			"4\tac.eagle\t1", //
+			"5\tac.gov\t1", //
+			"6\tac.gov.ascension\t2", //
+			"7\tac.gov.ascension-island\t1", //
+			"8\tac.gov.conservation-ascension-island\t1", //
+			"9\tac.gov.postoffice\t1", //
+	};
 
 	String[] hostGraphHyphenatedDomainsSubDomainOnly = { //
 			"0\tac.gov.ascension-island", //
@@ -200,6 +212,17 @@ class TestHostToDomainGraph {
 		testSorted(domainGraphDuplicatedDomains);
 		converter.doCount(true);
 		assertArrayEquals(domainGraphDuplicatedDomains, convert(converter, hostGraphDuplicatedDomains));
+	}
+
+	@Test
+	void testConvertNodesHyphenatedDomainsIncludingMultiPartSuffixes() {
+		// verify sorting of input and expected output
+		testSorted(hostGraphHyphenatedDomains);
+		testSorted(domainGraphHyphenatedDomainsInclMultiPartSuffixes);
+		converter.doCount(true);
+		converter.multiPartSuffixesAsDomains(true);
+		assertArrayEquals(domainGraphHyphenatedDomainsInclMultiPartSuffixes,
+				convert(converter, hostGraphHyphenatedDomains));
 	}
 
 }

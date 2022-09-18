@@ -4,6 +4,7 @@ package org.commoncrawl.webgraph;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.function.Function;
@@ -265,7 +266,7 @@ public class JoinSortRanks {
 		System.err.println("Options:");
 		System.err.println(" --big\tgraphs are \"big\" (more than 2^31 nodes)");
 		System.err.println("");
-		System.err.println("Input / output parameters");
+		System.err.println("Input / output parameters (text must be UTF-8)");
 		System.err.println(" <vertices>\tvertices file with format:");
 		System.err.println("           \t  <id> \\t <name> [ \\t <optionalfield>]...");
 		System.err.println(" <hc.bin>  \tharmonic centrality values, binary floats");
@@ -305,14 +306,14 @@ public class JoinSortRanks {
 		String ranksHC = args[argpos++];
 		String ranksPR = args[argpos++];
 		String ranksOut = args[argpos++];
-		try (Stream<String> in = Files.lines(Paths.get(nodesIn))) {
+		try (Stream<String> in = Files.lines(Paths.get(nodesIn), StandardCharsets.UTF_8)) {
 			OutputStream ranksOutStream;
 			if (ranksOut.equals("-")) {
 				ranksOutStream = System.out;
 			} else {
 				ranksOutStream = Files.newOutputStream(Paths.get(ranksOut));
 			}
-			PrintStream out = new PrintStream(ranksOutStream);
+			PrintStream out = new PrintStream(ranksOutStream, false, StandardCharsets.UTF_8);
 			LOG.info("Loading harmonic centrality values from {}", ranksHC);
 			converter.loadHarmonicCentrality(ranksHC);
 			LOG.info("Loading page rank values from {}", ranksPR);
