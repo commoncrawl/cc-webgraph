@@ -6,6 +6,7 @@ package org.commoncrawl.webgraph;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public class HostToDomainGraph {
 
 	protected boolean countHosts = false;
 	protected boolean privateDomains = false;
-	protected boolean strictDomainValidate = true;
+	protected boolean includeMultiPartSuffixes = false;
 
 	protected long maxSize;
 	private int[] ids;
@@ -71,12 +72,34 @@ public class HostToDomainGraph {
 	protected long lastFromId = -1;
 	protected long lastToId = -1;
 	private long numInputLinesNodes = 0;
+	private long numInputLinesEdges = 0;
 	protected String lastRevHost = null;
 	protected Domain lastDomain = null;
 	private TreeMap<String, Domain> domainQueue = new TreeMap<>();
 	private int maxQueueUsed = 0;
 
 	private static Pattern SPLIT_HOST_PATTERN = Pattern.compile("\\.");
+
+	private Consumer<? super String> reporterInputNodes = (String line) -> {
+		if ((numInputLinesNodes % 500000) != 0 || numInputLinesNodes == 0) {
+			return;
+		}
+		LOG.info("Processed {} node input lines, mapped to {} domains, domain queue usage: {} (max. {})",
+				numInputLinesNodes, (currentId + 1), domainQueue.size(), maxQueueUsed);
+	};
+
+	private Consumer<? super String> reporterInputEdges = (String line) -> {
+		if ((numInputLinesEdges % 5000000) != 0 || numInputLinesEdges == 0) {
+			return;
+		}
+		LOG.info("Processed {} edge input lines, last edge from node id = {}", numInputLinesEdges, lastFromId);
+	};
+
+	private void reportConfig() {
+		LOG.info("{} with {} host vertices", this.getClass().getSimpleName(), maxSize);
+		LOG.info(" - map to {} domains", (privateDomains ? "private" : "ICANN"));
+		LOG.info(" - {}multi-part public suffixes as domains", (includeMultiPartSuffixes ? "" : "no "));
+	}
 
 	/**
 	 * Representation of a domain as a result of folding one or more host names to a
@@ -190,16 +213,44 @@ public class HostToDomainGraph {
 		ids = new int[maxSize];
 	}
 
+	/**
+	 * @param countHosts if true count the number of hosts per domain
+	 */
 	public void doCount(boolean countHosts) {
 		this.countHosts = countHosts;
 	}
 
+	/**
+	 * @param privateDomains if true map host to domain names using also the
+	 *                       suffixes from the <a href=
+	 *                       "https://github.com/publicsuffix/list/wiki/Format#divisions">subdivision</a>
+	 *                       of "private domains" in the public suffix list in
+	 *                       addition to the "ICANN domains" used otherwise
+	 */
 	public void doPrivateDomains(boolean privateDomains) {
 		this.privateDomains = privateDomains;
 	}
 
+	/**
+	 * deprecated, use {@link #multiPartSuffixesAsDomains(boolean)} instead (note
+	 * that this requires to invert boolean parameter)
+	 * 
+	 * @param strict if false map host names equal to any multi-part public suffix
+	 *               (the suffix contains a dot) (eg. <code>gov.uk</code> or
+	 *               <code>freight.aero</code>) one by one to domain names.
+	 */
+	@Deprecated
 	public void setStrictDomainValidate(boolean strict) {
-		this.strictDomainValidate = strict;
+		this.includeMultiPartSuffixes = !strict;
+	}
+
+	/**
+	 * @param include if true map host names equal to any multi-part public suffix
+	 *                (the suffix contains a dot) (eg. <code>gov.uk</code> or
+	 *                <code>freight.aero</code>) one by one to domain names.
+	 */
+	public void multiPartSuffixesAsDomains(boolean include) {
+		this.includeMultiPartSuffixes = include;
 	}
 
 	public static String reverseHost(String revHost) {
@@ -240,9 +291,9 @@ public class HostToDomainGraph {
 		String host = reverseHost(revHost);
 		String domain = EffectiveTldFinder.getAssignedDomain(host, true, !privateDomains);
 		StringBuilder sb = new StringBuilder();
-		if (domain == null && !strictDomainValidate) {
+		if (domain == null && includeMultiPartSuffixes) {
 			if (EffectiveTldFinder.getEffectiveTLDs().containsKey(host) && host.indexOf('.') != -1) {
-				LOG.info("Accepting public suffix {} (containing dot) as domain", host);
+				LOG.info("Accepting public suffix (containing dot) as domain: {}", host);
 			}
 			domain = host;
 		}
@@ -252,7 +303,7 @@ public class HostToDomainGraph {
 			return null;
 		}
 		if (lastDomain != null && domain.equals(lastDomain.name)) {
-			// short cut for the common case many subsequent subdomains of the same domain
+			// short cut for the common case of many subsequent subdomains of the same domain
 			lastDomain.add(id);
 			return null;
 		}
@@ -332,6 +383,7 @@ public class HostToDomainGraph {
 	}
 
 	public String convertEdge(String line) {
+		numInputLinesEdges++;
 		int sep = line.indexOf('\t');
 		if (sep == -1) {
 			return "";
@@ -387,25 +439,46 @@ public class HostToDomainGraph {
 	}
 
 	private static void showHelp() {
-		System.err.println("HostToDomainGraph [-c] <maxSize> <nodes_in> <nodes_out> <edges_in> <edges_out>");
+		System.err.println("HostToDomainGraph [options]... <maxSize> <nodes_in> <nodes_out> <edges_in> <edges_out>");
+		System.err.println("");
+		System.err.println("Convert host-level webgraph to domain-level webgraph.");
+		System.err.println("Both input and output must be UTF-8 or ASCII, the input is required");
+		System.err.println("to be sorted lexicographically by node labels given in reversed domain name notation.");
+		System.err.println("");
 		System.err.println("Options:");
+		System.err.println(" -h\t(also -? or --help) show usage message and exit");
 		System.err.println(" -c\tcount hosts per domain (additional column in <nodes_out>");
-		System.err.println(" --private\tconvert to private domains (from the private section of the public");
-		System.err.println("          \tsuffix list, see https://publicsuffix.org/list/#list-format");
-		System.err.println(" --no-strict-domain-validate\tstrictly discard potentially invalid domains");
+		System.err.println(" --private-domains\tconvert to private domains (include suffixes from the");
+		System.err.println("                  \tPRIVATE domains subdivision of the public suffix list,");
+		System.err.println("                  \tsee https://github.com/publicsuffix/list/wiki/Format#divisions");
+		System.err.println(" --multipart-suffixes-as-domains\toutput host names which are equal to multi-part");
+		System.err.println("                                \tpublic suffixes (the suffix contains a dot) as domain");
+		System.err.println("                                \tnames, eg. `gov.uk', `freight.aero' or `altoadige.it'.");
+		System.err.println("                                \tNo further validation (DNS lookup) is performed.");
 	}
 
 	public static void main(String[] args) {
 		boolean countHosts = false;
-		boolean noStrictDomainValidate = false;
+		boolean includeMultiPartSuffixes = false;
+		boolean privateDomains = false;
 		int argpos = 0;
 		while (argpos < args.length && args[argpos].startsWith("-")) {
 			switch (args[argpos]) {
+			case "-?":
+			case "-h":
+			case "--help":
+				showHelp();
+				System.exit(0);
 			case "-c":
 				countHosts = true;
 				break;
-			case "--no-strict-domain-validate":
-				noStrictDomainValidate = true;
+			case "--multipart-suffixes-as-domains":
+			case "--no-strict-domain-validate": // back-ward compatibility
+				includeMultiPartSuffixes = true;
+				break;
+			case "--private-domains":
+			case "--private": // back-ward compatibility
+				privateDomains = true;
 				break;
 			default:
 				System.err.println("Unknown option " + args[argpos]);
@@ -432,12 +505,15 @@ public class HostToDomainGraph {
 			converter = new HostToDomainGraphBig(maxSize);
 		}
 		converter.doCount(countHosts);
-		converter.setStrictDomainValidate(!noStrictDomainValidate);
+		converter.multiPartSuffixesAsDomains(includeMultiPartSuffixes);
+		converter.doPrivateDomains(privateDomains);
+		converter.reportConfig();
 		String nodesIn = args[argpos + 1];
 		String nodesOut = args[argpos + 2];
-		try (Stream<String> in = Files.lines(Paths.get(nodesIn));
-				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(nodesOut)))) {
-			converter.convert(converter::convertNode, in, out);
+		try (Stream<String> in = Files.lines(Paths.get(nodesIn), StandardCharsets.UTF_8);
+				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(nodesOut)), false,
+						StandardCharsets.UTF_8)) {
+			converter.convert(converter::convertNode, in, out, converter.reporterInputNodes);
 			converter.finishNodes(out);
 			LOG.info("Finished conversion of nodes/vertices");
 		} catch (IOException e) {
@@ -446,9 +522,10 @@ public class HostToDomainGraph {
 		}
 		String edgesIn = args[argpos + 3];
 		String edgesOut = args[argpos + 4];
-		try (Stream<String> in = Files.lines(Paths.get(edgesIn));
-				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(edgesOut)))) {
-			converter.convert(converter::convertEdge, in, out);
+		try (Stream<String> in = Files.lines(Paths.get(edgesIn), StandardCharsets.UTF_8);
+				PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(edgesOut)), false,
+						StandardCharsets.UTF_8)) {
+			converter.convert(converter::convertEdge, in, out, converter.reporterInputEdges);
 			LOG.info("Finished conversion of edges");
 		} catch (IOException e) {
 			LOG.error("Failed to read edges from " + edgesIn);

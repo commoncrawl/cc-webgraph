@@ -1,7 +1,31 @@
 #!/bin/bash
 
+FLAGS=()
+PROPERTIES=()
+while true; do
+    case "$1" in
+        "-D"* )
+            PROPERTIES=("${PROPERTIES[@]}" "$1")
+            shift
+            ;;
+        "-"* )
+            FLAGS=("${FLAGS[@]}" "$1")
+            shift
+            ;;
+        * )
+            break
+            ;;
+    esac
+done
+
 if [ $# -lt 3 ]; then
-	echo "$0 <number_of_vertices> <input_dir> <output_dir> [<tmp_dir>]" >&2
+	echo "$0 [<flags>...] <number_of_vertices> <input_dir> <output_dir> [<tmp_dir>]" >&2
+    if [ ${#FLAGS[@]} -gt 0 ]; then
+        echo ""
+        echo "Calling HostToDomainGraph with provided flags (${FLAGS[@]}):"
+        $JAVA_HOME/bin/java -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
+                            "${PROPERTIES[@]}" org.commoncrawl.webgraph.HostToDomainGraph "${FLAGS[@]}"
+    fi
 	exit 1
 fi
 
@@ -9,7 +33,6 @@ SIZE="$1"
 INPUTDIR="$2"
 OUTPUTDIR="$3"
 TMPDIR=${4:-./tmp/}
-NO_STRICT_VALIDATE="${NO_STRICT_VALIDATE-""}" # "--no-strict-domain-validate"
 
 MAIN_MEM_GB=16
 PARALLEL_SORT_THREADS=2
@@ -103,12 +126,13 @@ if [ "$SIZE" -gt $((2**31-1024)) ]; then
 fi
 
 $JAVA_HOME/bin/java -Xmx${JXMX}g -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
-     org.commoncrawl.webgraph.HostToDomainGraph \
-     $NO_STRICT_VALIDATE \
-     -c $SIZE \
-     <(zcat $_VERTICES) \
-     >(gzip >$OUTPUTDIR/vertices.txt.gz) \
-     <(zcat $_EDGES) \
-     >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >$OUTPUTDIR/edges.txt.gz)
+                    "${PROPERTIES[@]}" \
+                    org.commoncrawl.webgraph.HostToDomainGraph \
+                    "${FLAGS[@]}" \
+                    $SIZE \
+                    <(zcat $_VERTICES) \
+                    >(gzip >$OUTPUTDIR/vertices.txt.gz) \
+                    <(zcat $_EDGES) \
+                    >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >$OUTPUTDIR/edges.txt.gz)
 
 wait # for subshells to finish
