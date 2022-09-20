@@ -61,6 +61,10 @@
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.0.0-M6</version>
+				<configuration>
+					<!-- need enough RAM to execute the unit tests using large arrays -->
+					<argLine>-Xmx6144m</argLine>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -106,8 +110,8 @@
 		</dependency>
 
 		<!-- WebGraph framework (https://webgraph.di.unimi.it/)
-		     and libraries from the Laboratory for Web Algorithmics
-		     (LAW - https://law.di.unimi.it/) -->
+				 and libraries from the Laboratory for Web Algorithmics
+				 (LAW - https://law.di.unimi.it/) -->
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>webgraph</artifactId>
