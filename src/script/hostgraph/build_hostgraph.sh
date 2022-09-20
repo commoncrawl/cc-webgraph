@@ -241,7 +241,7 @@ for CRAWL in ${CRAWLS[@]}; do
               $SPARK_HOME/bin/spark-submit \
               $SPARK_ON_YARN \
               $SPARK_HADOOP_OPTS \
-              --py-files sparkcc.py,iana_tld.py \
+              --py-files sparkcc.py,iana_tld.py,wat_extract_links.py \
               --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
               --conf spark.task.maxFailures=10 \
               --conf spark.executor.memory=$EXECUTOR_MEM \
@@ -258,6 +258,7 @@ for CRAWL in ${CRAWLS[@]}; do
               --conf spark.sql.parquet.compression.codec=gzip \
               $SPARK_EXTRA_OPTS \
               ./hostlinks_to_graph.py \
+              --normalize_host_names \
               --validate_host_names \
               --save_as_text $HDFS_BASE_DIR/text/$CRAWL \
               --num_output_partitions $WEBGRAPH_EDGE_PARTITIONS \
@@ -298,7 +299,7 @@ if [ -n "MERGE_NAME" ]; then
       $SPARK_HOME/bin/spark-submit \
         $SPARK_ON_YARN \
         $SPARK_HADOOP_OPTS \
-        --py-files sparkcc.py,iana_tld.py \
+        --py-files sparkcc.py,iana_tld.py,wat_extract_links.py \
         --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
         --conf spark.task.maxFailures=10 \
         --conf spark.executor.memory=$EXECUTOR_MEM \
@@ -315,6 +316,7 @@ if [ -n "MERGE_NAME" ]; then
         --conf spark.sql.parquet.compression.codec=gzip \
         $SPARK_EXTRA_OPTS \
         ./hostlinks_to_graph.py \
+        --normalize_host_names \
         --validate_host_names \
         --save_as_text $HDFS_BASE_DIR/text/$MERGE_NAME \
         --vertex_partitions $WEBGRAPH_VERTEX_PARTITIONS \
