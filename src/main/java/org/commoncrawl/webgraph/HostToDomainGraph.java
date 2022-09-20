@@ -383,6 +383,7 @@ public class HostToDomainGraph {
 	}
 
 	public String convertEdge(String line) {
+		numInputLinesEdges++;
 		int sep = line.indexOf('\t');
 		if (sep == -1) {
 			return "";
