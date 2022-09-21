@@ -170,6 +170,7 @@ public class HostToDomainGraph {
 			int l1 = d1.length();
 			int l2 = d2.length();
 			int l = Math.min(l1, l2);
+			int dots = 0;
 			for (int i = 0; i < l; i++) {
 				char c1 = d1.charAt(i);
 				char c2 = d2.charAt(i);
@@ -180,6 +181,20 @@ public class HostToDomainGraph {
 					 * cannot finish "org.example-domain" unless "org.example" is done
 					 */
 					return 0;
+				} else if (c1 == DOT) {
+					dots++;
+					if (dots > 1) {
+						/*
+						 * cannot finish "name.his.forgot.foobar" unless "name.his" is done
+						 * 
+						 * This is a special case of multi-part suffixes with more than two parts when
+						 * the first part is also a public suffix, e.g. (in reversed domain name
+						 * notation) if "a" and "a.b.c" are public suffixes, and the input hosts are
+						 * (sorted): "a.b.c.d", "a.b.c.e" and "a.b.f", then we need to delay the output
+						 * of "a.b.c.*" until "a.b" is done.
+						 */
+						return 0;
+					}
 				}
 			}
 			if (l1 == l2) {
