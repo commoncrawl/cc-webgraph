@@ -121,6 +121,10 @@
 					<groupId>net.sf.jung</groupId>
 					<artifactId>jung-io</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
@@ -128,6 +132,12 @@
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>webgraph-big</artifactId>
 			<version>${webgraph.big.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -159,6 +169,22 @@
 					<groupId>info.bliki.wiki</groupId>
 					<artifactId>bliki-core</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>it.unimi.di.law</groupId>
+					<artifactId>jericho-html-dev</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>log4j-over-slf4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>jcl-over-slf4j</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<!-- it.unimi.dsi.law.rank.PageRankParallelGaussSeidel requires -->
@@ -168,17 +194,16 @@
 			<version>2.8.0</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>${slf4j-api.version}</version>
+		</dependency>
 
 		<!-- Test dependencies -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<version>${slf4j-api.version}</version>
 			<scope>test</scope>
 		</dependency>
 
