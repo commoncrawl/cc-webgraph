@@ -429,6 +429,7 @@ public class HostToDomainGraph {
 			domain.id = ++currentId;
 			out.println(getNodeLine(domain));
 		}
+		out.flush();
 		domainQueue.clear();
 		LOG.info("Number of input lines: {}", numInputLinesNodes);
 		LOG.info("Number of domain nodes: {}", currentId + 1);
@@ -532,7 +533,7 @@ public class HostToDomainGraph {
 			converter.finishNodes(out);
 			LOG.info("Finished conversion of nodes/vertices");
 		} catch (IOException e) {
-			LOG.error("Failed to read nodes from " + nodesIn);
+			LOG.error("Failed to convert nodes", e);
 			System.exit(1);
 		}
 		String edgesIn = args[argpos + 3];
@@ -543,7 +544,7 @@ public class HostToDomainGraph {
 			converter.convert(converter::convertEdge, in, out, converter.reporterInputEdges);
 			LOG.info("Finished conversion of edges");
 		} catch (IOException e) {
-			LOG.error("Failed to read edges from " + edgesIn);
+			LOG.error("Failed to convert edges", e);
 			System.exit(1);
 		}
 	}
