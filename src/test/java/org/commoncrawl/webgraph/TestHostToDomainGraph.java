@@ -110,6 +110,35 @@ class TestHostToDomainGraph {
 			"3\tno.hordalandfolkemusikklag\t1", //
 	};
 
+	/**
+	 * <code>forgot.his.name</name> is in the "private section" of the public suffix
+	 * list, while <code>name</name> is in the ICANN section, see
+	 * {@link HostToDomainGraph#doPrivateDomains(boolean)}
+	 */
+	String[] hostGraphPrivateDomains = { //
+			"0\tname.hiro", //
+			"1\tname.hiropo", //
+			"2\tname.his.forgot.adam", //
+			"3\tname.his.forgot.ben", //
+			"4\tname.his.forgot.never", //
+			"5\tname.his.prz", //
+			"6\tname.hista.tac", //
+			"7\tname.history", //
+			"8\tname.history.0.aba", //
+			"9\tname.hit", //
+	};
+	String[] domainGraphPrivateDomains = { //
+			"0\tname.hiro\t1", //
+			"1\tname.hiropo\t1", //
+			"2\tname.his\t1", //
+			"3\tname.his.forgot.adam\t1", //
+			"4\tname.his.forgot.ben\t1", //
+			"5\tname.his.forgot.never\t1", //
+			"6\tname.hista\t1", //
+			"7\tname.history\t2", //
+			"8\tname.hit\t1", //
+	};
+
 	@BeforeEach
 	void init() {
 		converter = new HostToDomainGraph(maxGraphNodes);
@@ -223,6 +252,17 @@ class TestHostToDomainGraph {
 		converter.multiPartSuffixesAsDomains(true);
 		assertArrayEquals(domainGraphHyphenatedDomainsInclMultiPartSuffixes,
 				convert(converter, hostGraphHyphenatedDomains));
+	}
+
+	@Test
+	void testConvertPrivateDomain() {
+		// verify sorting of input and expected output
+		testSorted(hostGraphPrivateDomains);
+		testSorted(domainGraphPrivateDomains);
+		converter.doCount(true);
+		converter.doPrivateDomains(true);
+		converter.multiPartSuffixesAsDomains(true);
+		assertArrayEquals(domainGraphPrivateDomains, convert(converter, hostGraphPrivateDomains));
 	}
 
 }
