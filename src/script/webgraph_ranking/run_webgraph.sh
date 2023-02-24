@@ -36,8 +36,7 @@ case "$1" in
         #  http://webgraph.di.unimi.it/docs/it/unimi/dsi/webgraph/algo/HyperBall.html
         JAVA_OPTS="$JAVA_OPTS -server -Xss256K -XX:PretenureSizeThreshold=512M -XX:MaxNewSize=$(($MEMMB/3))m \
           -XX:+UseNUMA -XX:+UseTLAB -XX:+ResizeTLAB \
-          -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=99 -XX:+UseCMSInitiatingOccupancyOnly \
-          -verbose:gc -Xloggc:gc.log"
+          -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=99 -XX:+UseCMSInitiatingOccupancyOnly"
     ;;
 esac
 
