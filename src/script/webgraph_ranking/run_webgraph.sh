@@ -33,7 +33,7 @@ case "$1" in
         | it.unimi.dsi.law.rank.PageRankParallelGaussSeidel \
         | it.unimi.dsi.big.law.rank.PageRankParallelGaussSeidel )
         # Java options for HyperBall, recommended in
-        #  http://webgraph.di.unimi.it/docs/it/unimi/dsi/webgraph/algo/HyperBall.html
+        #  https://webgraph.di.unimi.it/docs/it/unimi/dsi/webgraph/algo/HyperBall.html
         JAVA_OPTS="$JAVA_OPTS -server -Xss256K -XX:PretenureSizeThreshold=512M -XX:MaxNewSize=$(($MEMMB/3))m \
           -XX:+UseNUMA -XX:+UseTLAB -XX:+ResizeTLAB \
           -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=99 -XX:+UseCMSInitiatingOccupancyOnly"
