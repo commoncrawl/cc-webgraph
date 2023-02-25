@@ -12,7 +12,7 @@
 ### saved as tuples <from_host, to_host>
 
 # crawls to be processed
-CRAWLS=("CC-MAIN-2022-21" "CC-MAIN-2022-27" "CC-MAIN-2022-33")
+CRAWLS=("CC-MAIN-2022-40" "CC-MAIN-2022-49" "CC-MAIN-2023-06")
 
 INPUT_BASE_URL="s3://commoncrawl/"
 
@@ -27,7 +27,7 @@ CONSTRUCT_HOSTGRAPH=false
 # - splits hostlink extraction into multiple jobs
 # - output is checkpointed on S3 after each job
 #   (useful if cluster runs on spot instances)
-MAX_INPUT_SIZE=56000
+MAX_INPUT_SIZE=64000
 
 # hdfs:// directory where input and output is kept
 HDFS_BASE_DIR=hdfs:///user/ubuntu/webgraph
@@ -42,7 +42,7 @@ S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2022-may-jun-aug
+MERGE_NAME=cc-main-2022-23-sep-nov-jan
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
