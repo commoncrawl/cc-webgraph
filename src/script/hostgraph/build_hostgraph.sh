@@ -42,13 +42,13 @@ HOST_LINKS_TO_GRAPH_ARGS=(--validate_host_names) # --normalize_host_names
 
 
 # source library functions
-source $(dirname $0)/../workflow_lib.sh
+source "$(dirname "$0")"/../workflow_lib.sh
 
 # source workflow configuration
-source $(dirname $0)/hostgraph_config.sh
+source "$(dirname "$0")"/hostgraph_config.sh
 
 # define SPARK_HOME and HADOOP_CONF_DIR
-source $PWD/spark_env.sh
+source "$PWD"/spark_env.sh
 
 
 ################################################################################
@@ -59,19 +59,19 @@ function upload_parquet() (
     TABLE=$1
     UPLOAD_NAME=$2
     UPLOAD_DIR=$S3A_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph
-    if hadoop fs -test -d $UPLOAD_DIR/vertices; then
+    if hadoop fs -test -d "$UPLOAD_DIR"/vertices; then
         echo "Upload $UPLOAD_DIR/vertices already exists, skipping..."
     else
         hadoop distcp \
-               $HDFS_BASE_DIR/${TABLE}_vertices \
-               $UPLOAD_DIR/vertices
+               "$HDFS_BASE_DIR"/${TABLE}_vertices \
+               "$UPLOAD_DIR"/vertices
     fi
-    if hadoop fs -test -d $UPLOAD_DIR/edges; then
-        echo "Upload $UPLOAD_DIR/edges already exists, skipping..."
+    if hadoop fs -test -d "$UPLOAD_DIR"/edges; then
+        echo "Upload "$UPLOAD_DIR"/edges already exists, skipping..."
     else
         hadoop distcp \
-               $HDFS_BASE_DIR/${TABLE}_edges \
-               $UPLOAD_DIR/edges
+               "$HDFS_BASE_DIR"/${TABLE}_edges \
+               "$UPLOAD_DIR"/edges
     fi
 )
 
@@ -79,27 +79,27 @@ function upload_text() (
     set -xeo pipefail
     NAME=$1
     UPLOAD_NAME=$2
-    UPLOAD_DIR=$S3A_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/text
+    UPLOAD_DIR="$S3A_OUTPUT_PREFIX"/$UPLOAD_NAME/hostgraph/text
     PUBLIC=${3:-false}
     DISTCP_OPTS=""
     if $PUBLIC; then
         DISTCP_OPTS="$DISTCP_OPTS -Dfs.s3a.acl.default=PublicRead"
     fi
-    if hadoop fs -test -d $UPLOAD_DIR/vertices; then
+    if hadoop fs -test -d "$UPLOAD_DIR"/vertices; then
         echo "Upload $UPLOAD_DIR/vertices already exists, skipping..."
     else
-        hadoop fs -rm -f $HDFS_BASE_DIR/text/$NAME/vertices/_SUCCESS
+        hadoop fs -rm -f "$HDFS_BASE_DIR"/text/$NAME/vertices/_SUCCESS
         hadoop distcp $DISTCP_OPTS \
-               $HDFS_BASE_DIR/text/$NAME/vertices \
-               $UPLOAD_DIR/vertices
+               "$HDFS_BASE_DIR"/text/$NAME/vertices \
+               "$UPLOAD_DIR"/vertices
     fi
-    if hadoop fs -test -d $UPLOAD_DIR/edges; then
+    if hadoop fs -test -d "$UPLOAD_DIR"/edges; then
         echo "Upload $UPLOAD_DIR/edges already exists, skipping..."
     else
-        hadoop fs -rm -f $HDFS_BASE_DIR/text/$NAME/edges/_SUCCESS
+        hadoop fs -rm -f "$HDFS_BASE_DIR"/text/$NAME/edges/_SUCCESS
         hadoop distcp $DISTCP_OPTS \
-               $HDFS_BASE_DIR/text/$NAME/edges \
-               $UPLOAD_DIR/edges
+               "$HDFS_BASE_DIR"/text/$NAME/edges \
+               "$UPLOAD_DIR"/edges
     fi
 )
 
@@ -110,7 +110,7 @@ function dump_upload_text() (
     UPLOAD_NAME=$2
     mkdir -p output/$NAME/hostgraph/tmp_edges/
     mkdir -p output/$NAME/hostgraph/tmp_vertices/
-    hadoop fs -copyToLocal $HDFS_BASE_DIR/text/$NAME/vertices/*.gz output/$NAME/hostgraph/tmp_vertices/
+    hadoop fs -copyToLocal "$HDFS_BASE_DIR"/text/$NAME/vertices/*.gz output/$NAME/hostgraph/tmp_vertices/
     n_vertex_files=$(ls output/$NAME/hostgraph/tmp_vertices/*.gz | wc -l)
     if [ $n_vertex_files -eq 1 ]; then
         mv output/$NAME/hostgraph/tmp_vertices/*.gz output/$NAME/hostgraph/vertices.txt.gz
@@ -118,7 +118,7 @@ function dump_upload_text() (
         zcat output/$NAME/hostgraph/tmp_vertices/*.gz | gzip >output/$NAME/hostgraph/vertices.txt.gz
     fi
     aws s3 cp --no-progress output/$NAME/hostgraph/vertices.txt.gz $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/
-    hadoop fs -copyToLocal $HDFS_BASE_DIR/text/$NAME/edges/*.gz output/$NAME/hostgraph/tmp_edges/
+    hadoop fs -copyToLocal "$HDFS_BASE_DIR"/text/$NAME/edges/*.gz output/$NAME/hostgraph/tmp_edges/
     sort_input=""
     for e in output/$NAME/hostgraph/tmp_edges/*.gz; do
         sort_input="$sort_input <(zcat $e)"
@@ -138,11 +138,11 @@ function create_input_splits() {
         if $INCLUDE_ROBOTSTXT_SITEMAP_LINKS; then
             aws s3 cp --quiet --no-progress s3://commoncrawl/crawl-data/$CRAWL/robotstxt.paths.gz .
         fi
-        zcat *.paths.gz | shuf >input.txt
-        NUM_INPUT_PATHS=$(cat input.txt | wc -l)
-        NUM_SPLITS=$((1+$NUM_INPUT_PATHS/$MAX_INPUT_SIZE))
+        zcat ./*.paths.gz | shuf >input.txt
+        NUM_INPUT_PATHS=$(wc -l <input.txt)
+        NUM_SPLITS=$((1+NUM_INPUT_PATHS/MAX_INPUT_SIZE))
         if [ $NUM_SPLITS -gt 0 ]; then
-            split --suffix-length=2 -d --lines=$((1+$NUM_INPUT_PATHS/$NUM_SPLITS)) input.txt input_split_
+            split --suffix-length=2 -d --lines=$((1+NUM_INPUT_PATHS/NUM_SPLITS)) input.txt input_split_
         fi
         for split in input_split_*; do
             mv $split $split.txt
@@ -150,19 +150,19 @@ function create_input_splits() {
         done
         cd - >&2
         ### copy input to hdfs://
-        hadoop fs -mkdir -p $HDFS_BASE_DIR/$CRAWL
-        hadoop fs -mkdir -p $HDFS_BASE_DIR/input/$CRAWL/
-        hadoop fs -mkdir -p $HDFS_BASE_DIR/text/$CRAWL/
-        hadoop fs -copyFromLocal -f input/$CRAWL/input.txt $HDFS_BASE_DIR/input/$CRAWL/
+        hadoop fs -mkdir -p "$HDFS_BASE_DIR"/$CRAWL
+        hadoop fs -mkdir -p "$HDFS_BASE_DIR"/input/$CRAWL/
+        hadoop fs -mkdir -p "$HDFS_BASE_DIR"/text/$CRAWL/
+        hadoop fs -copyFromLocal -f input/$CRAWL/input.txt "$HDFS_BASE_DIR"/input/$CRAWL/
         for split in input/$CRAWL/input_split_*.txt; do
-            hadoop fs -copyFromLocal -f $split $HDFS_BASE_DIR/input/$CRAWL/
+            hadoop fs -copyFromLocal -f $split "$HDFS_BASE_DIR"/input/$CRAWL/
         done
         # The input list is considerably small because it only references s3:// paths:
         # deploy it on every node to make all tasks NODE_LOCAL
-        hadoop fs -setrep $(($NUM_EXECUTORS+1)) $HDFS_BASE_DIR/input/$CRAWL/ >&2
+        hadoop fs -setrep $((NUM_EXECUTORS+1)) "$HDFS_BASE_DIR"/input/$CRAWL/ >&2
     else
-        NUM_INPUT_PATHS=$(cat input/$CRAWL/input.txt | wc -l)
-        NUM_SPLITS=$((1+$NUM_INPUT_PATHS/$MAX_INPUT_SIZE))
+        NUM_INPUT_PATHS=$(wc -l <input/$CRAWL/input.txt)
+        NUM_SPLITS=$((1+NUM_INPUT_PATHS/MAX_INPUT_SIZE))
         for split in input/$CRAWL/input_split_*.txt; do
             __INPUT_SPLITS=(${__INPUT_SPLITS[@]} "$HDFS_BASE_DIR/$split")
         done
@@ -178,16 +178,16 @@ MERGE_CRAWL_INPUT=""
 for CRAWL in ${CRAWLS[@]}; do
 
     INPUT_SPLITS=($(create_input_splits $CRAWL))
-    echo "Input splits: ""${INPUT_SPLITS[@]}"
+    echo "Input splits: ""${INPUT_SPLITS[*]}"
 
     for ((i=0; i<${#INPUT_SPLITS[@]}; i++)); do
         INPUT=${INPUT_SPLITS[$i]}
-        NUM_INPUT_PATHS=$(cat input/$CRAWL/$(basename $INPUT) | wc -l)
-        INPUT_PARTITIONS=$(($NUM_INPUT_PATHS/$DIVISOR_INPUT_PARTITIONS))
+        NUM_INPUT_PATHS=$(wc -l <input/$CRAWL/$(basename $INPUT))
+        INPUT_PARTITIONS=$((NUM_INPUT_PATHS/DIVISOR_INPUT_PARTITIONS))
         echo "$INPUT => $INPUT_PARTITIONS partitions"
 
         _step hostlinks.$CRAWL.split$i \
-              $SPARK_HOME/bin/spark-submit \
+              "$SPARK_HOME"/bin/spark-submit \
               $SPARK_ON_YARN \
               $SPARK_HADOOP_OPTS \
               --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
@@ -210,7 +210,7 @@ for CRAWL in ${CRAWLS[@]}; do
               --input_base_url $INPUT_BASE_URL \
               --num_input_partitions $INPUT_PARTITIONS \
               --num_output_partitions $OUTPUT_PARTITIONS \
-              --local_temp_dir $TMPDIR \
+              --local_temp_dir "$TMPDIR" \
               $INPUT hostlinks$i
         #         --intermediate_output hostlinkstmp$i
 
@@ -218,8 +218,8 @@ for CRAWL in ${CRAWLS[@]}; do
               hadoop distcp \
               -Dfs.s3a.connection.timeout=2000 \
               -Dfs.s3a.attempts.maximum=3 \
-              $HDFS_BASE_DIR/$CRAWL/hostlinks$i \
-              $S3A_OUTPUT_PREFIX/$CRAWL/hostlinks/$i
+              "$HDFS_BASE_DIR"/$CRAWL/hostlinks$i \
+              "$S3A_OUTPUT_PREFIX"/$CRAWL/hostlinks/$i
 
     done
 
@@ -239,12 +239,12 @@ for CRAWL in ${CRAWLS[@]}; do
     if $CONSTRUCT_HOSTGRAPH; then
 
         VERTEX_IDS=""
-        if hadoop fs -stat $HDFS_BASE_DIR/$CRAWL/hostgraph_vertices; then
+        if hadoop fs -stat "$HDFS_BASE_DIR"/$CRAWL/hostgraph_vertices; then
             VERTEX_IDS="--vertex_ids $HDFS_BASE_DIR/$CRAWL/hostgraph_vertices"
         fi
 
         _step hostgraph.$CRAWL \
-              $SPARK_HOME/bin/spark-submit \
+              "$SPARK_HOME"/bin/spark-submit \
               $SPARK_ON_YARN \
               $SPARK_HADOOP_OPTS \
               --py-files "$PYFILES_HOST_LINKS_TO_GRAPH" \
@@ -265,7 +265,7 @@ for CRAWL in ${CRAWLS[@]}; do
               $SPARK_EXTRA_OPTS \
               $HOST_LINKS_TO_GRAPH \
               "${HOST_LINKS_TO_GRAPH_ARGS[@]}" \
-              --save_as_text $HDFS_BASE_DIR/text/$CRAWL \
+              --save_as_text "$HDFS_BASE_DIR"/text/$CRAWL \
               --num_output_partitions $WEBGRAPH_EDGE_PARTITIONS \
               --local_temp_dir $TMPDIR \
               $VERTEX_IDS \
@@ -285,7 +285,7 @@ done # CRAWLS
 
 if [ -n "MERGE_NAME" ]; then
 
-    hadoop fs -mkdir -p $HDFS_BASE_DIR/text/$MERGE_NAME
+    hadoop fs -mkdir -p "$HDFS_BASE_DIR"/text/$MERGE_NAME
 
     for INP in "${MERGE_INPUT[@]}"; do
         if [ -z "$MERGE_CRAWL_INPUT" ]; then
@@ -296,12 +296,12 @@ if [ -n "MERGE_NAME" ]; then
     done
 
     VERTEX_IDS=""
-    if hadoop fs -test -d $HDFS_BASE_DIR/hostgraph_merged_vertices; then
+    if hadoop fs -test -d "$HDFS_BASE_DIR"/hostgraph_merged_vertices; then
         VERTEX_IDS="--vertex_ids $HDFS_BASE_DIR/hostgraph_merged_vertices"
     fi
 
     _step hostgraph_merged \
-      $SPARK_HOME/bin/spark-submit \
+      "$SPARK_HOME"/bin/spark-submit \
         $SPARK_ON_YARN \
         $SPARK_HADOOP_OPTS \
         --py-files "$PYFILES_HOST_LINKS_TO_GRAPH" \
@@ -322,10 +322,10 @@ if [ -n "MERGE_NAME" ]; then
         $SPARK_EXTRA_OPTS \
         $HOST_LINKS_TO_GRAPH \
         "${HOST_LINKS_TO_GRAPH_ARGS[@]}" \
-        --save_as_text $HDFS_BASE_DIR/text/$MERGE_NAME \
+        --save_as_text "$HDFS_BASE_DIR"/text/$MERGE_NAME \
         --vertex_partitions $WEBGRAPH_VERTEX_PARTITIONS \
         --num_output_partitions $WEBGRAPH_EDGE_PARTITIONS \
-        --local_temp_dir $TMPDIR \
+        --local_temp_dir "$TMPDIR" \
         $VERTEX_IDS \
         $MERGE_CRAWL_INPUT hostgraph_merged
 

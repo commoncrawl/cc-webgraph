@@ -7,17 +7,16 @@ function LOG__() {
     echo $(date '+[%Y-%m-%d %H:%M:%S]') "$@"
 }
 
-
 function _test_step() {
-    if [ -n "$STOP_FILE_" ] && [ -e $STOP_FILE_ ]; then
+    if [ -n "$STOP_FILE_" ] && [ -e "$STOP_FILE_" ]; then
         LOG__ INFO "Found stop file: $STOP_FILE_"
         exit 0
     fi
     _STEP__="$1"; shift
-    if [ -e $LOGDIR/"$_STEP__".log ] \
-           || [ -e $LOGDIR/"$_STEP__".log.xz ] \
-           || [ -e $LOGDIR/"$_STEP__".log.gz ] \
-           || [ -e $LOGDIR/"$_STEP__".log.bz2 ]; then
+    if [ -e "$LOGDIR"/"$_STEP__".log ] \
+           || [ -e "$LOGDIR"/"$_STEP__".log.xz ] \
+           || [ -e "$LOGDIR"/"$_STEP__".log.gz ] \
+           || [ -e "$LOGDIR"/"$_STEP__".log.bz2 ]; then
         LOG__ INFO "Step $_STEP__ already done, $LOGDIR/$_STEP__.log exists"
         return 1
     fi
@@ -28,12 +27,12 @@ function _step() {
     _STEP__="$1"; shift
     if _test_step "$_STEP__"; then
         LOG__ INFO "Running step $_STEP__ ..."
-        if "$@" &>$LOGDIR/"$_STEP__".log; then
+        if "$@" &>"$LOGDIR"/"$_STEP__".log; then
              LOG__ INFO "Step $_STEP__ succeeded."
         else
             RES=$?
             LOG__ ERROR "Step $_STEP__ failed with $RES"
-            mv $LOGDIR/"$_STEP__".log $LOGDIR/"$_STEP__".failed.$(date +%Y-%m-%d-%H-%M-%S).log
+            mv "$LOGDIR"/"$_STEP__".log "$LOGDIR"/"$_STEP__".failed.$(date +%Y-%m-%d-%H-%M-%S).log
             LOG__ ERROR "Exiting ..."
             exit $RES
         fi

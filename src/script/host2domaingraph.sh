@@ -21,12 +21,14 @@ while true; do
     esac
 done
 
+JAR=target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar
+
 if [ $# -lt 3 ]; then
 	echo "$0 [<flags>...] <number_of_vertices> <input_dir> <output_dir> [<tmp_dir>]" >&2
     if [ ${#FLAGS[@]} -gt 0 ]; then
         echo ""
-        echo "Calling HostToDomainGraph with provided flags (${FLAGS[@]}):"
-        $JAVA_HOME/bin/java -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
+        echo "Calling HostToDomainGraph with provided flags (${FLAGS[*]}):"
+        "$JAVA_HOME"/bin/java -cp "$CLASSPATH":"JAR" \
                             "${PROPERTIES[@]}" org.commoncrawl.webgraph.HostToDomainGraph "${FLAGS[@]}"
     fi
 	exit 1
@@ -89,17 +91,17 @@ PARALLEL_SORT_THREADS=2
 export LC_ALL=C
 
 # sort with large buffers, merge sort over many files if possible
-SORTOPTS="--batch-size 128 --buffer-size $((1+$MAIN_MEM_GB/5))g --parallel=$PARALLEL_SORT_THREADS --temporary-directory $TMPDIR" # --compress-program=gzip
+SORTOPTS="--batch-size 128 --buffer-size $((1+MAIN_MEM_GB/5))g --parallel=$PARALLEL_SORT_THREADS --temporary-directory $TMPDIR" # --compress-program=gzip
 
 set -exo pipefail
 
-test -d $TMPDIR || mkdir $TMPDIR
+test -d "$TMPDIR" || mkdir "$TMPDIR"
 
 
 _EDGES=$INPUTDIR/edges.txt.gz
-if [ -e $_EDGES ]; then
+if [ -e "$_EDGES" ]; then
     echo "Found single edges file: $_EDGES"
-elif [ -d $INPUTDIR/edges/ ]; then
+elif [ -d "$INPUTDIR"/edges/ ]; then
     # edges is a directory with multiple edges files
     _EDGES="$INPUTDIR/edges/*.gz"
     echo "Found edges directory, using: $_EDGES"
@@ -109,9 +111,9 @@ else
 fi
 
 _VERTICES=$INPUTDIR/vertices.txt.gz
-if [ -e $_VERTICES ]; then
+if [ -e "$_VERTICES" ]; then
     echo "Found single vertices file: $_VERTICES"
-elif [ -d $INPUTDIR/vertices/ ]; then
+elif [ -d "$INPUTDIR"/vertices/ ]; then
     # vertices is a directory with multiple vertices files
     echo "Found vertices directory, using: $_VERTICES"
     _VERTICES="$INPUTDIR/vertices/*.gz"
@@ -121,21 +123,21 @@ else
 fi
 
 
-mkdir -p $OUTPUTDIR/
+mkdir -p "$OUTPUTDIR/"
 
-JXMX=$((2+1+5*$SIZE/2**30))
+JXMX=$((2+1+5*SIZE/2**30))
 if [ "$SIZE" -gt $((2**31-1024)) ]; then
-    JXMX=$((8+1+10*$SIZE/2**30))
+    JXMX=$((8+1+10*SIZE/2**30))
 fi
 
-$JAVA_HOME/bin/java -Xmx${JXMX}g -cp $CLASSPATH:target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar \
+"$JAVA_HOME"/bin/java -Xmx${JXMX}g -cp "$CLASSPATH":"$JAR" \
                     "${PROPERTIES[@]}" \
                     org.commoncrawl.webgraph.HostToDomainGraph \
                     "${FLAGS[@]}" \
                     $SIZE \
                     <(zcat $_VERTICES) \
-                    >(gzip >$OUTPUTDIR/vertices.txt.gz) \
+                    >(gzip >"$OUTPUTDIR"/vertices.txt.gz) \
                     <(zcat $_EDGES) \
-                    >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >$OUTPUTDIR/edges.txt.gz)
+                    >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >"$OUTPUTDIR"/edges.txt.gz)
 
 wait # for subshells to finish
