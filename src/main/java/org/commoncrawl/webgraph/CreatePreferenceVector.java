@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2022 Common Crawl and contributors
+ */
 package org.commoncrawl.webgraph;
 
 import java.io.DataOutputStream;
@@ -13,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
-
 
 /**
  * Create a preference vector used for PageRank calculations, e.g.,

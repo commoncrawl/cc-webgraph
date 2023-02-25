@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2022 Common Crawl and contributors
 
 ### functions used to run webgraph... workflow
 

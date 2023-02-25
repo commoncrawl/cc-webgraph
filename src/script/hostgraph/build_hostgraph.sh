@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2022 Common Crawl and contributors
+
 set -e
 set -o pipefail
 set -x

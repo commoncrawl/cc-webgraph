@@ -1,5 +1,8 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2022 Common Crawl and contributors
+ */
 package org.commoncrawl.webgraph;
-
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -20,7 +23,6 @@ import it.unimi.dsi.fastutil.ints.IntComparator;
 import it.unimi.dsi.fastutil.io.BinIO;
 import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import it.unimi.dsi.fastutil.longs.LongComparator;
-
 
 /**
  * Assign ranks to harmonic centrality and page rank values, join ranks with
