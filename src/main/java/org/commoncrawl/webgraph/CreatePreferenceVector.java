@@ -21,7 +21,7 @@ import it.unimi.dsi.fastutil.longs.LongList;
 /**
  * Create a preference vector used for PageRank calculations, e.g.,
  * (Anti)TrustRank. See <a href=
- * "http://law.di.unimi.it/software/law-docs/it/unimi/dsi/law/rank/PageRank.html#buildProperties-java.lang.String-java.lang.String-java.lang.String-">PageRank.buildProperties(...)</a>.
+ * "https://law.di.unimi.it/software/law-docs/it/unimi/dsi/law/rank/PageRank.html">PageRank.buildProperties(...)</a>.
  */
 public class CreatePreferenceVector {
 
@@ -145,7 +145,7 @@ public class CreatePreferenceVector {
 
 	/**
 	 * Check preference vector whether values sum up to 1.0, see <a href=
-	 * "http://law.di.unimi.it/software/law-docs/it/unimi/dsi/law/rank/SpectralRanking.html#isStochastic-it.unimi.dsi.fastutil.doubles.DoubleList-">isStochastic()</a>
+	 * "https://law.di.unimi.it/software/law-docs/it/unimi/dsi/law/rank/SpectralRanking.html#isStochastic(it.unimi.dsi.fastutil.doubles.DoubleList)">isStochastic()</a>
 	 */
 	private boolean validatePreferenceVector() {
 		double sumPreferenceValues = preferenceNamesFound * defaultPreferenceValue;

@@ -45,18 +45,21 @@ import it.unimi.dsi.fastutil.longs.LongBigArrays;
  * memory requirements (number of hosts &times; 4 bytes plus some memory to
  * queue domains unless all hosts under this domain are processed).
  * 
+ * <p>
  * Notes, assumptions and preconditions:
  * <ul>
  * <li>host nodes must be sorted lexicographically by reversed host name, see
  * above</li>
  * <li>the host-domain map is hold as array. To overcome Java's max array size
- * (approx. 2^32), {@link HostToDomainGraphBig} (based on fastutils'
- * {@link BigArrays}) is automatically used if the array size limit is hit.</li>
+ * (approx. 2^32 or {@link Arrays#MAX_ARRAY_SIZE}) {@link HostToDomainGraphBig}
+ * (based on fastutils' {@link BigArrays}) is automatically used if the array
+ * size limit is hit.</li>
  * <li>the number of resulting domains is limited by Java's max. array size.
  * This shouldn't be a problem.</li>
  * <li>also the number of hosts per domain is limited by Java's max. array
  * size</li>
  * </ul>
+ * </p>
  */
 public class HostToDomainGraph {
 
@@ -268,8 +271,18 @@ public class HostToDomainGraph {
 		this.includeMultiPartSuffixes = include;
 	}
 
-	public static String reverseHost(String revHost) {
-		String[] rev = SPLIT_HOST_PATTERN.split(revHost);
+	/**
+	 * Reverse host name, eg. <code>www.example.com</code> is reversed to
+	 * <code>com.example.www</code>. Can be also used to "unreverse" a reversed host
+	 * name.
+	 * 
+	 * @param host name
+	 * @return host in <a href=
+	 *         "https://en.wikipedia.org/wiki/Reverse_domain_name_notation">reverse
+	 *         domain name notation</a>
+	 */
+	public static String reverseHost(String host) {
+		String[] rev = SPLIT_HOST_PATTERN.split(host);
 		for (int i = 0; i < (rev.length / 2); i++) {
 			String temp = rev[i];
 			rev[i] = rev[rev.length - i - 1];
@@ -436,6 +449,10 @@ public class HostToDomainGraph {
 		LOG.info("Max. domain queue usage: {}", maxQueueUsed);
 	}
 
+	/**
+	 * Holds a host to domain graph mapping if the size of the host graph exceeds
+	 * {@link Arrays#MAX_ARRAY_SIZE}.
+	 */
 	public static class HostToDomainGraphBig extends HostToDomainGraph {
 
 		private long[][] ids;

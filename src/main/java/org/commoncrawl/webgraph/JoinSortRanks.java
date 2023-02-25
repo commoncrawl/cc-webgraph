@@ -66,7 +66,7 @@ public class JoinSortRanks {
 		if (f1 > f2) {
 			return -1;
 		}
-		// secondary sorting by original order (lexicographically sorted node names)
+		// secondary sorting by original order (node IDs)
 		return Integer.compare(k1, k2);
 	}
 
@@ -82,7 +82,7 @@ public class JoinSortRanks {
 		if (f1 > f2) {
 			return -1;
 		}
-		// secondary sorting by original order (lexicographically sorted node names)
+		// secondary sorting by original order (node IDs)
 		return Integer.compare(k1, k2);
 	}
 
@@ -161,8 +161,10 @@ public class JoinSortRanks {
 	}
 
 
-
-
+	/**
+	 * Implementation of {@link JoinSortRanks} for lists exceeding
+	 * {@link Arrays#MAX_ARRAY_SIZE}.
+	 */
 	public static class JoinSortRanksBig extends JoinSortRanks {
 
 		private float[][] harmonicCentralityValues;
@@ -196,7 +198,7 @@ public class JoinSortRanks {
 			if (f1 > f2) {
 				return -1;
 			}
-			// secondary sorting by original order (lexicographically sorted node names)
+			// secondary sorting by original order (node IDs)
 			return Long.compare(k1, k2);
 		}
 
@@ -212,7 +214,7 @@ public class JoinSortRanks {
 			if (f1 > f2) {
 				return -1;
 			}
-			// secondary sorting by original order (lexicographically sorted node names)
+			// secondary sorting by original order (node IDs)
 			return Long.compare(k1, k2);
 		}
 
