@@ -104,37 +104,37 @@ case "$EXECUTOR_CONFIG" in
         EXECUTOR_MEM=22g
         NODEMANAGER_MEM_MB=$((24*1024))
         ;;
-    r[3456]*.xlarge )
+    r[34567]*.xlarge )
         EXECUTOR_CORES=3
         EXECUTOR_MEM=23g
         NODEMANAGER_MEM_MB=$((24*1024))
         ;;
-    r[3456]*.2xlarge )
+    r[34567]*.2xlarge )
         EXECUTOR_CORES=6
         EXECUTOR_MEM=46g
         NODEMANAGER_MEM_MB=$((48*1024))
         ;;
-    r[3456]*.4xlarge )
+    r[34567]*.4xlarge )
         EXECUTOR_CORES=12
         EXECUTOR_MEM=94g
         NODEMANAGER_MEM_MB=$((96*1024))
         ;;
-    r[3456]*.8xlarge )
+    r[34567]*.8xlarge )
         EXECUTOR_CORES=24
         EXECUTOR_MEM=190g
         NODEMANAGER_MEM_MB=$((192*1024))
         ;;
-    m[3456]*.2xlarge )
+    m[34567]*.2xlarge )
         EXECUTOR_CORES=8
         EXECUTOR_MEM=23g
         NODEMANAGER_MEM_MB=$((24*1024))
         ;;
-    m[3456]*.4xlarge )
+    m[34567]*.4xlarge )
         EXECUTOR_CORES=16
         EXECUTOR_MEM=46g
         NODEMANAGER_MEM_MB=$((48*1024))
         ;;
-    m[3456]*.8xlarge )
+    m[34567]*.8xlarge )
         EXECUTOR_CORES=32
         EXECUTOR_MEM=94g
         NODEMANAGER_MEM_MB=$((98*1024))
