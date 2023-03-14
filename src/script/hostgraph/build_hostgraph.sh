@@ -33,8 +33,8 @@ SPARK_ON_YARN="--master yarn"
 SPARK_HADOOP_OPTS=""
 SPARK_EXTRA_OPTS=""
 
-HOST_LINK_EXTRACTOR=./wat_extract_links.py
-PYFILES_HOST_LINK_EXTRACTOR="sparkcc.py"
+HOST_LINK_EXTRACTOR=./hostlinks_extract_fastwarc.py
+PYFILES_HOST_LINK_EXTRACTOR="sparkcc.py,sparkcc_fastwarc.py,wat_extract_links.py"
 
 HOST_LINKS_TO_GRAPH=./hostlinks_to_graph.py
 PYFILES_HOST_LINKS_TO_GRAPH="sparkcc.py,iana_tld.py,wat_extract_links.py"
@@ -198,12 +198,14 @@ for CRAWL in ${CRAWLS[@]}; do
               --conf spark.network.timeout=300s \
               --conf spark.shuffle.io.maxRetries=5 \
               --conf spark.shuffle.io.retryWait=30s \
+              --conf spark.io.compression.codec=zstd \
+              --conf spark.checkpoint.compress=true \
               --conf spark.locality.wait=0s \
               --num-executors $NUM_EXECUTORS \
               --executor-cores $EXECUTOR_CORES \
               --executor-memory $EXECUTOR_MEM \
               --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR/$CRAWL \
-              --conf spark.sql.parquet.compression.codec=gzip \
+              --conf spark.sql.parquet.compression.codec=zstd \
               --py-files "$PYFILES_HOST_LINK_EXTRACTOR" \
               $SPARK_EXTRA_OPTS \
               $HOST_LINK_EXTRACTOR \
@@ -247,7 +249,6 @@ for CRAWL in ${CRAWLS[@]}; do
               "$SPARK_HOME"/bin/spark-submit \
               $SPARK_ON_YARN \
               $SPARK_HADOOP_OPTS \
-              --py-files "$PYFILES_HOST_LINKS_TO_GRAPH" \
               --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
               --conf spark.task.maxFailures=10 \
               --conf spark.executor.memory=$EXECUTOR_MEM \
@@ -257,11 +258,14 @@ for CRAWL in ${CRAWLS[@]}; do
               --conf spark.shuffle.io.maxRetries=5 \
               --conf spark.shuffle.io.retryWait=30s \
               --conf spark.locality.wait=1s \
+              --conf spark.io.compression.codec=zstd \
+              --conf spark.checkpoint.compress=true \
               --num-executors $NUM_EXECUTORS \
               --executor-cores $EXECUTOR_CORES \
               --executor-memory $EXECUTOR_MEM \
               --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR/$CRAWL \
-              --conf spark.sql.parquet.compression.codec=gzip \
+              --conf spark.sql.parquet.compression.codec=zstd \
+              --py-files "$PYFILES_HOST_LINKS_TO_GRAPH" \
               $SPARK_EXTRA_OPTS \
               $HOST_LINKS_TO_GRAPH \
               "${HOST_LINKS_TO_GRAPH_ARGS[@]}" \
@@ -314,11 +318,13 @@ if [ -n "MERGE_NAME" ]; then
         --conf spark.shuffle.io.maxRetries=5 \
         --conf spark.shuffle.io.retryWait=30s \
         --conf spark.locality.wait=1s \
+        --conf spark.io.compression.codec=zstd \
+        --conf spark.checkpoint.compress=true \
         --num-executors $NUM_EXECUTORS \
         --executor-cores $EXECUTOR_CORES \
         --executor-memory $EXECUTOR_MEM \
         --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR \
-        --conf spark.sql.parquet.compression.codec=gzip \
+        --conf spark.sql.parquet.compression.codec=zstd \
         $SPARK_EXTRA_OPTS \
         $HOST_LINKS_TO_GRAPH \
         "${HOST_LINKS_TO_GRAPH_ARGS[@]}" \
