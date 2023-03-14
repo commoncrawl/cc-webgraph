@@ -37,11 +37,17 @@ public class TestJoinSortRanks {
         int arrSize = (int) (intOverflow / Double.BYTES);
         double[] arr = new double[arrSize];
         try {
+            LOG.info("Storing double array of length {} in file {}", arrSize, file.getAbsolutePath());
             BinIO.storeDoubles(arr, file);
-            LOG.info("Stored {} doubles in file {} of size {}", arrSize, file.getAbsolutePath(), file.length());
+            LOG.info("Successfully stored double array of length {} in file {}, resulting file size: {} bytes", arrSize, file.getAbsolutePath(), file.length());
+            assertEquals(intOverflow, file.length());
+            LOG.info("Trying to clean up Java heap space...");
+            arr = null;
+            System.gc();
+            LOG.info("Loading double array from file {}", file.getAbsolutePath());
             arr = BinIO.loadDoubles(file.getAbsolutePath());
             assertEquals(arrSize, arr.length);
-            assertEquals(intOverflow, file.length());
+            LOG.info("Successfully loaded double array of length {} from file {}", arr.length, file.getAbsolutePath());
         } catch (IOException e) {
             fail("Failed to store and load double array: " + e);
         } finally {
