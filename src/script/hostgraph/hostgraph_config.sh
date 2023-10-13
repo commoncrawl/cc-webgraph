@@ -42,7 +42,7 @@ S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2023-mar-oct
+MERGE_NAME=cc-main-2023-mar-may-oct
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
