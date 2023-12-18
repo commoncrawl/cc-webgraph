@@ -12,7 +12,7 @@
 ### saved as tuples <from_host, to_host>
 
 # crawls to be processed
-CRAWLS=("CC-MAIN-2023-14" "CC-MAIN-2023-23" "CC-MAIN-2023-40")
+CRAWLS=("CC-MAIN-2023-23" "CC-MAIN-2023-40" "CC-MAIN-2023-50")
 
 INPUT_BASE_URL="s3://commoncrawl/"
 
@@ -42,7 +42,7 @@ S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2023-mar-may-oct
+MERGE_NAME=cc-main-2023-nov-dec
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
