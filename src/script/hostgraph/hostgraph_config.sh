@@ -42,7 +42,12 @@ S3A_OUTPUT_PREFIX=s3a://commoncrawl-webgraph
 ################################################################################
 # construct a merged graph of multiple monthly crawls
 
-MERGE_NAME=cc-main-2023-nov-dec
+MERGE_NAME=cc-main-2023-may-sep-nov
+
+# Naming convention should be the three months' crawls that are
+# used to generate this graph release. In the event of multiple months
+# in a crawl, (e.g August & September, November & December) the first month is
+# used (e.g aug-nov).
 
 # input to construct a merged graph (over multiple months)
 # - used in addition to input crawls (see CRAWLS)
