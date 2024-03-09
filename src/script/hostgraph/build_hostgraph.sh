@@ -25,7 +25,7 @@ set -x
 #      .../build_hostgraph.sh
 
 # Note: the script is tested using a Hadoop cluster running
-# Apache Bigtop 3.x on Ubuntu 20.04. You may need to adapt it
+# Apache Bigtop 3.x on Ubuntu 22.04. You may need to adapt it
 # to run on different Hadoop distributions.
 
 
@@ -130,7 +130,20 @@ function dump_upload_text() (
 
 function create_input_splits() {
     CRAWL="$1"
-    if ! [ -d input/$CRAWL/ ]; then
+    __INPUT_SPLITS=()
+    if [ -d input/$CRAWL/ ]; then
+        # input splits are already created locally, read the splits again
+        # (this might happen if one of the steps/jobs has failed and
+        #  this script is run again)
+        for split in input/$CRAWL/input_split_*.txt; do
+            __INPUT_SPLITS=(${__INPUT_SPLITS[@]} "$HDFS_BASE_DIR/$split")
+        done
+
+    elif hadoop fs -stat "$S3A_OUTPUT_PREFIX"/$CRAWL/hostlinks/ >&2; then
+        # no local input splits but output on S3
+        echo "Not creating input split for crawl $CRAWL because output prefix already exists on S3: $S3A_OUTPUT_PREFIX/$CRAWL/hostlinks/" >&2
+
+    else
         mkdir -p input/$CRAWL
         cd input/$CRAWL
         aws s3 cp --quiet --no-progress s3://commoncrawl/crawl-data/$CRAWL/wat.paths.gz .
@@ -160,12 +173,6 @@ function create_input_splits() {
         # The input list is considerably small because it only references s3:// paths:
         # deploy it on every node to make all tasks NODE_LOCAL
         hadoop fs -setrep $((NUM_EXECUTORS+1)) "$HDFS_BASE_DIR"/input/$CRAWL/ >&2
-    else
-        NUM_INPUT_PATHS=$(wc -l <input/$CRAWL/input.txt)
-        NUM_SPLITS=$((1+NUM_INPUT_PATHS/MAX_INPUT_SIZE))
-        for split in input/$CRAWL/input_split_*.txt; do
-            __INPUT_SPLITS=(${__INPUT_SPLITS[@]} "$HDFS_BASE_DIR/$split")
-        done
     fi
     echo "${__INPUT_SPLITS[@]}"
 }
@@ -178,67 +185,100 @@ MERGE_CRAWL_INPUT=""
 for CRAWL in ${CRAWLS[@]}; do
 
     INPUT_SPLITS=($(create_input_splits $CRAWL))
-    echo "Input splits: ""${INPUT_SPLITS[*]}"
 
-    for ((i=0; i<${#INPUT_SPLITS[@]}; i++)); do
-        INPUT=${INPUT_SPLITS[$i]}
-        NUM_INPUT_PATHS=$(wc -l <input/$CRAWL/$(basename $INPUT))
-        INPUT_PARTITIONS=$((NUM_INPUT_PATHS/DIVISOR_INPUT_PARTITIONS))
-        echo "$INPUT => $INPUT_PARTITIONS partitions"
+    if [ -z "$INPUT_SPLITS" ]; then
+        # no input splits signals that the crawl has already successfully processed
+        if hadoop fs -stat "$S3A_OUTPUT_PREFIX"/$CRAWL/hostlinks/; then
+            echo "Output prefix for crawl $CRAWL already exists on S3: $S3A_OUTPUT_PREFIX/$CRAWL/hostlinks/"
+            if ! hadoop fs -stat "$S3A_OUTPUT_PREFIX"/$CRAWL/hostlinks/_SUCCESS; then
+                echo "No success marker found below S3 output prefix: $S3A_OUTPUT_PREFIX/$CRAWL/hostlinks/_SUCCESS"
+                echo "Please, verify the output and depending on the verification result, manually add the success marker or remove the output. Exiting ..."
+                exit 1
+            fi
+        fi
+        # add the existing output splits as input for host graph and merged graph
+        for output_split in $(hadoop fs -ls -C "$S3A_OUTPUT_PREFIX"/$CRAWL/hostlinks/); do
+            if [ -z "$HOSTGRAPH_INPUT" ]; then
+                HOSTGRAPH_INPUT="$output_split"
+            else
+                HOSTGRAPH_INPUT="--add_input $output_split $HOSTGRAPH_INPUT"
+            fi
+            if [ -z "$MERGE_CRAWL_INPUT" ]; then
+                MERGE_CRAWL_INPUT="$output_split"
+            else
+                MERGE_CRAWL_INPUT="--add_input $output_split $MERGE_CRAWL_INPUT"
+            fi
+        done
 
-        _step hostlinks.$CRAWL.split$i \
-              "$SPARK_HOME"/bin/spark-submit \
-              $SPARK_ON_YARN \
-              $SPARK_HADOOP_OPTS \
-              --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
-              --conf spark.task.maxFailures=80 \
-              --conf spark.executor.memory=$EXECUTOR_MEM \
-              --conf spark.driver.memory=6g \
-              --conf spark.core.connection.ack.wait.timeout=600s \
-              --conf spark.network.timeout=300s \
-              --conf spark.shuffle.io.maxRetries=5 \
-              --conf spark.shuffle.io.retryWait=30s \
-              --conf spark.io.compression.codec=zstd \
-              --conf spark.checkpoint.compress=true \
-              --conf spark.locality.wait=0s \
-              --num-executors $NUM_EXECUTORS \
-              --executor-cores $EXECUTOR_CORES \
-              --executor-memory $EXECUTOR_MEM \
-              --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR/$CRAWL \
-              --conf spark.sql.parquet.compression.codec=zstd \
-              --py-files "$PYFILES_HOST_LINK_EXTRACTOR" \
-              $SPARK_EXTRA_OPTS \
-              $HOST_LINK_EXTRACTOR \
-              --input_base_url $INPUT_BASE_URL \
-              --num_input_partitions $INPUT_PARTITIONS \
-              --num_output_partitions $OUTPUT_PARTITIONS \
-              --local_temp_dir "$TMPDIR" \
-              $INPUT hostlinks$i
-        #         --intermediate_output hostlinkstmp$i
-
-        _step hostlinks.$CRAWL.split$i.distcp \
-              hadoop distcp \
-              -Dfs.s3a.connection.timeout=2000 \
-              -Dfs.s3a.attempts.maximum=3 \
-              "$HDFS_BASE_DIR"/$CRAWL/hostlinks$i \
-              "$S3A_OUTPUT_PREFIX"/$CRAWL/hostlinks/$i
-
-    done
-
-
-    HOSTGRAPH_INPUT="$HDFS_BASE_DIR/$CRAWL/hostlinks0"
-    if [ -z "$MERGE_CRAWL_INPUT" ]; then
-        MERGE_CRAWL_INPUT="$HDFS_BASE_DIR/$CRAWL/hostlinks0"
     else
-        MERGE_CRAWL_INPUT="--add_input $HDFS_BASE_DIR/$CRAWL/hostlinks0 $MERGE_CRAWL_INPUT"
+        echo "Input splits: ""${INPUT_SPLITS[*]}"
+
+        for ((i=0; i<${#INPUT_SPLITS[@]}; i++)); do
+            INPUT=${INPUT_SPLITS[$i]}
+            NUM_INPUT_PATHS=$(wc -l <input/$CRAWL/$(basename $INPUT))
+            INPUT_PARTITIONS=$((NUM_INPUT_PATHS/DIVISOR_INPUT_PARTITIONS))
+            echo "$INPUT => $INPUT_PARTITIONS partitions"
+
+            _step hostlinks.$CRAWL.split$i \
+                  "$SPARK_HOME"/bin/spark-submit \
+                  $SPARK_ON_YARN \
+                  $SPARK_HADOOP_OPTS \
+                  --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
+                  --conf spark.task.maxFailures=80 \
+                  --conf spark.executor.memory=$EXECUTOR_MEM \
+                  --conf spark.driver.memory=6g \
+                  --conf spark.core.connection.ack.wait.timeout=600s \
+                  --conf spark.network.timeout=300s \
+                  --conf spark.shuffle.io.maxRetries=5 \
+                  --conf spark.shuffle.io.retryWait=30s \
+                  --conf spark.io.compression.codec=zstd \
+                  --conf spark.checkpoint.compress=true \
+                  --conf spark.locality.wait=0s \
+                  --num-executors $NUM_EXECUTORS \
+                  --executor-cores $EXECUTOR_CORES \
+                  --executor-memory $EXECUTOR_MEM \
+                  --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR/$CRAWL \
+                  --conf spark.sql.parquet.compression.codec=zstd \
+                  --py-files "$PYFILES_HOST_LINK_EXTRACTOR" \
+                  $SPARK_EXTRA_OPTS \
+                  $HOST_LINK_EXTRACTOR \
+                  --input_base_url $INPUT_BASE_URL \
+                  --num_input_partitions $INPUT_PARTITIONS \
+                  --num_output_partitions $OUTPUT_PARTITIONS \
+                  --local_temp_dir "$TMPDIR" \
+                  $INPUT hostlinks$i
+
+            _step hostlinks.$CRAWL.split$i.distcp \
+                  hadoop distcp \
+                  -Dfs.s3a.connection.timeout=2000 \
+                  -Dfs.s3a.attempts.maximum=3 \
+                  "$HDFS_BASE_DIR"/$CRAWL/hostlinks$i \
+                  "$S3A_OUTPUT_PREFIX"/$CRAWL/hostlinks/$i
+
+            if [ -z "$HOSTGRAPH_INPUT" ]; then
+                HOSTGRAPH_INPUT="$HDFS_BASE_DIR/$CRAWL/hostlinks$i"
+            else
+                HOSTGRAPH_INPUT="--add_input $HDFS_BASE_DIR/$CRAWL/hostlinks$i $HOSTGRAPH_INPUT"
+            fi
+            if [ -z "$MERGE_CRAWL_INPUT" ]; then
+                MERGE_CRAWL_INPUT="$HDFS_BASE_DIR/$CRAWL/hostlinks$i"
+            else
+                MERGE_CRAWL_INPUT="--add_input $HDFS_BASE_DIR/$CRAWL/hostlinks$i $MERGE_CRAWL_INPUT"
+            fi
+        done # end input splits
+
+        # Create the success marker on S3
+        hadoop fs -touchz "$S3A_OUTPUT_PREFIX"/$CRAWL/hostlinks/_SUCCESS
+
     fi
-    for ((i=1; i<${#INPUT_SPLITS[@]}; i++)); do
-        HOSTGRAPH_INPUT="--add_input $HDFS_BASE_DIR/$CRAWL/hostlinks$i $HOSTGRAPH_INPUT"
-        MERGE_CRAWL_INPUT="--add_input $HDFS_BASE_DIR/$CRAWL/hostlinks$i $MERGE_CRAWL_INPUT"
-    done
 
 
     if $CONSTRUCT_HOSTGRAPH; then
+
+        if hadoop fs -stat "$S3A_OUTPUT_PREFIX"/$CRAWL/hostgraph/; then
+            echo "Skipping creation of hostgraph for crawl $CRAWL because output prefix already exists on S3: $S3A_OUTPUT_PREFIX/$CRAWL/hostgraph/"
+            continue
+        fi
 
         VERTEX_IDS=""
         if hadoop fs -stat "$HDFS_BASE_DIR"/$CRAWL/hostgraph_vertices; then
