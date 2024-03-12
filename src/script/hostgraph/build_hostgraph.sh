@@ -198,6 +198,10 @@ for CRAWL in ${CRAWLS[@]}; do
         fi
         # add the existing output splits as input for host graph and merged graph
         for output_split in $(hadoop fs -ls -C "$S3A_OUTPUT_PREFIX"/$CRAWL/hostlinks/); do
+            case "$output_split" in
+                */_SUCCESS )
+                    continue ;;
+            esac
             if [ -z "$HOSTGRAPH_INPUT" ]; then
                 HOSTGRAPH_INPUT="$output_split"
             else
