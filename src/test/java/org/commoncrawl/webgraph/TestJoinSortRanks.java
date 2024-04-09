@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ public class TestJoinSortRanks {
      * Reproduce issue in fastutil 8.5.8 loading (double) arrays from files of
      * size 2^31 bytes or more.
      */
+    @Disabled("Fixed in fastutil 8.5.9")
     @Test
     void testLoadingDoubleArray() {
         File file;
