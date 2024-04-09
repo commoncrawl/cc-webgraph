@@ -28,8 +28,8 @@ if [ $# -lt 3 ]; then
     if [ ${#FLAGS[@]} -gt 0 ]; then
         echo ""
         echo "Calling HostToDomainGraph with provided flags (${FLAGS[*]}):"
-        "$JAVA_HOME"/bin/java -cp "$CLASSPATH":"JAR" \
-                            "${PROPERTIES[@]}" org.commoncrawl.webgraph.HostToDomainGraph "${FLAGS[@]}"
+        "$JAVA_HOME"/bin/java -cp "$CLASSPATH":"$JAR" "${PROPERTIES[@]}" \
+                    org.commoncrawl.webgraph.HostToDomainGraph "${FLAGS[@]}"
     fi
 	exit 1
 fi
