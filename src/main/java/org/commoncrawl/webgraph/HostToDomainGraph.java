@@ -47,19 +47,20 @@ import it.unimi.dsi.fastutil.longs.LongBigArrays;
  * 
  * <p>
  * Notes, assumptions and preconditions:
+ * </p>
  * <ul>
- * <li>host nodes must be sorted lexicographically by reversed host name, see
+ * <li>host vertices must be sorted lexicographically by reversed host name, see
  * above</li>
  * <li>the host-domain map is hold as array. To overcome Java's max array size
  * (approx. 2^32 or {@link Arrays#MAX_ARRAY_SIZE}) {@link HostToDomainGraphBig}
- * (based on fastutils' {@link BigArrays}) is automatically used if the array
- * size limit is hit.</li>
+ * (based on fastutils' {@link BigArrays}) is used if the array size limit is
+ * hit by the number of hosts. This number (or an estimate) needs to be known
+ * ahead.</li>
  * <li>the number of resulting domains is limited by Java's max. array size.
  * This shouldn't be a problem.</li>
  * <li>also the number of hosts per domain is limited by Java's max. array
- * size</li>
+ * size.</li>
  * </ul>
- * </p>
  */
 public class HostToDomainGraph {
 
@@ -273,7 +274,7 @@ public class HostToDomainGraph {
 
 	/**
 	 * Reverse host name, eg. <code>www.example.com</code> is reversed to
-	 * <code>com.example.www</code>. Can be also used to "unreverse" a reversed host
+	 * <code>com.example.www</code>. Can also be used to "unreverse" a reversed host
 	 * name.
 	 * 
 	 * @param host name
