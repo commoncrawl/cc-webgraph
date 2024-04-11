@@ -463,10 +463,12 @@ public class HostToDomainGraph {
 			ids = LongBigArrays.newBigArray(maxSize);
 		}
 
+		@Override
 		protected void setValue(long id, long value) {
 			BigArrays.set(ids, id, value);
 		}
 
+		@Override
 		protected long getValue(long id) {
 			return BigArrays.get(ids, id);
 		}
