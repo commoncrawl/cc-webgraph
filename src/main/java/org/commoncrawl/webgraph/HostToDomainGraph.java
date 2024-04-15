@@ -31,9 +31,9 @@ import it.unimi.dsi.fastutil.longs.LongBigArrays;
  * represented by two text files/streams with tab-separated columns
  * <dl>
  * <dt>vertices</dt>
- * <dd>&langle;id, revName&rangle;</dd>
+ * <dd>&lt;id, revName&gt;</dd>
  * <dt>edges</dt>
- * <dd>&langle;fromId, toId&rangle;</dd>
+ * <dd>&lt;fromId, toId&gt;</dd>
  * </dl>
  * Host or domain names are reversed (<code>www.example.com</code> is written as
  * <code>com.example.www</code>). The vertices file is sorted lexicographically
@@ -161,6 +161,11 @@ public class HostToDomainGraph {
 		/**
 		 * Whether the domain is safe to output given the reversed domain name seen
 		 * next.
+		 * 
+		 * @param nextDomainRevName next name in lexicographically sorted list of
+		 *                          reversed domain names
+		 * @return true if the domain is safe to output, that is from a list of sorted
+		 *         host names no host later in this list may fold to this domain name
 		 */
 		public boolean isSafeToOutput(String nextDomainRevName) {
 			return isSafeToOutput(this.revName, nextDomainRevName);
