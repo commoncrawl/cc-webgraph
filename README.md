@@ -13,7 +13,19 @@ java -cp target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar <classname> <
 
 The assembly jar file includes also the [WebGraph](https://webgraph.di.unimi.it/) and [LAW](https://law.di.unimi.it/software.php) packages required to compute [PageRank](https://en.wikipedia.org/wiki/PageRank) and [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality).
 
-Note that the webgraphs are usually multiple Gigabytes in size and require a sufficient Java heap size ([Java option](https://docs.oracle.com/en/java/javase/14/docs/specs/man/java.html#extra-options-for-java) `-Xmx`) for processing.
+
+### Javadocs
+
+The Javadocs are created by `mvn javadoc:javadoc`. Then open the file `target/site/apidocs/index.html` in a browser.
+
+
+## Memory and Disk Requirements
+
+Note that the webgraphs are usually multiple Gigabytes in size and require for processing
+- a sufficient Java heap size ([Java option](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html#extra-options-for-java) `-Xmx`)
+- enough disk space to store the graphs and temporary data.
+
+The exact requirements depend on the graph size and the task – graph exploration or ranking, etc.
 
 
 ## Construction and Ranking of Host- and Domain-Level Web Graphs
@@ -49,7 +61,7 @@ The shell script is easily adapted to your needs. Please refer to the [LAW datas
 
 The Common Crawl webgraph data sets are announced on the [Common Crawl web site](https://commoncrawl.org/tag/webgraph/).
 
-Instructions how to explore the webgraphs are given in the [cc-notebooks project](//github.com/commoncrawl/cc-notebooks/tree/master/cc-webgraph-statistics).
+For instructions how to explore the webgraphs using the JShell please see the tutorial [Interactive Graph Exploration](./graph-exploration-README.md). For an older approach using [Jython](https://www.jython.org/) and [pyWebGraph](https://github.com/mapio/py-web-graph), see the [cc-notebooks project](//github.com/commoncrawl/cc-notebooks/tree/master/cc-webgraph-statistics).
 
 
 ## Credits
