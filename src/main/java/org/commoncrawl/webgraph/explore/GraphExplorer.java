@@ -23,8 +23,8 @@ public class GraphExplorer {
 		public Graph(String name) {
 			this.name = name;
 			try {
-				graph = ImmutableGraph.load(name);
-				graphT = ImmutableGraph.load(name + "-t");
+				graph = ImmutableGraph.loadMapped(name);
+				graphT = ImmutableGraph.loadMapped(name + "-t");
 				vertexMap = (ImmutableExternalPrefixMap) BinIO.loadObject(name + ".iepm");
 			} catch (IOException | ClassNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -60,6 +60,14 @@ public class GraphExplorer {
 		public int indegree() {
 			return g.graphT.outdegree((int) id);
 		}
+
+		public int[] successors() {
+			return g.graph.successorArray((int) id);
+		}
+
+		public int[] predecessors() {
+			return g.graphT.successorArray((int) id);
+		}
 	}
 
 	private Graph g = null;
@@ -67,6 +75,10 @@ public class GraphExplorer {
 
 	public GraphExplorer(String name) {
 		g = new Graph(name);
+	}
+
+	public Graph getGraph() {
+		return g;
 	}
 
 	public Vertex getVertex(String vertexLabel) {
