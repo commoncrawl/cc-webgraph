@@ -4,11 +4,14 @@ Tools to construct and process web graphs from Common Crawl data
 
 ## Compiling and Packaging Java Tools
 
+Java 11 or upwards are required.
+
 The Java tools are compiled and packaged by [Maven](https://maven.apache.org/). If Maven is installed just run `mvn package`. Now the Java tools can be run via
 ```
 java -cp target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar <classname> <args>...
 ```
-The assembly jar file requires Java 10 or upwards to run. It includes also the [WebGraph](https://webgraph.di.unimi.it/) and [LAW](https://law.di.unimi.it/software.php) packages required to compute [PageRank](https://en.wikipedia.org/wiki/PageRank) and [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality).
+
+The assembly jar file includes also the [WebGraph](https://webgraph.di.unimi.it/) and [LAW](https://law.di.unimi.it/software.php) packages required to compute [PageRank](https://en.wikipedia.org/wiki/PageRank) and [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality).
 
 Note that the webgraphs are usually multiple Gigabytes in size and require a sufficient Java heap size ([Java option](https://docs.oracle.com/en/java/javase/14/docs/specs/man/java.html#extra-options-for-java) `-Xmx`) for processing.
 

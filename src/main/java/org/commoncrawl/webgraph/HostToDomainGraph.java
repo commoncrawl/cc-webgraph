@@ -31,9 +31,9 @@ import it.unimi.dsi.fastutil.longs.LongBigArrays;
  * represented by two text files/streams with tab-separated columns
  * <dl>
  * <dt>vertices</dt>
- * <dd>&langle;id, revName&rangle;</dd>
+ * <dd>&lt;id, revName&gt;</dd>
  * <dt>edges</dt>
- * <dd>&langle;fromId, toId&rangle;</dd>
+ * <dd>&lt;fromId, toId&gt;</dd>
  * </dl>
  * Host or domain names are reversed (<code>www.example.com</code> is written as
  * <code>com.example.www</code>). The vertices file is sorted lexicographically
@@ -47,19 +47,20 @@ import it.unimi.dsi.fastutil.longs.LongBigArrays;
  * 
  * <p>
  * Notes, assumptions and preconditions:
+ * </p>
  * <ul>
- * <li>host nodes must be sorted lexicographically by reversed host name, see
+ * <li>host vertices must be sorted lexicographically by reversed host name, see
  * above</li>
  * <li>the host-domain map is hold as array. To overcome Java's max array size
  * (approx. 2^32 or {@link Arrays#MAX_ARRAY_SIZE}) {@link HostToDomainGraphBig}
- * (based on fastutils' {@link BigArrays}) is automatically used if the array
- * size limit is hit.</li>
+ * (based on fastutils' {@link BigArrays}) is used if the array size limit is
+ * hit by the number of hosts. This number (or an estimate) needs to be known
+ * ahead.</li>
  * <li>the number of resulting domains is limited by Java's max. array size.
  * This shouldn't be a problem.</li>
  * <li>also the number of hosts per domain is limited by Java's max. array
- * size</li>
+ * size.</li>
  * </ul>
- * </p>
  */
 public class HostToDomainGraph {
 
@@ -160,6 +161,11 @@ public class HostToDomainGraph {
 		/**
 		 * Whether the domain is safe to output given the reversed domain name seen
 		 * next.
+		 * 
+		 * @param nextDomainRevName next name in lexicographically sorted list of
+		 *                          reversed domain names
+		 * @return true if the domain is safe to output, that is from a list of sorted
+		 *         host names no host later in this list may fold to this domain name
 		 */
 		public boolean isSafeToOutput(String nextDomainRevName) {
 			return isSafeToOutput(this.revName, nextDomainRevName);
@@ -273,7 +279,7 @@ public class HostToDomainGraph {
 
 	/**
 	 * Reverse host name, eg. <code>www.example.com</code> is reversed to
-	 * <code>com.example.www</code>. Can be also used to "unreverse" a reversed host
+	 * <code>com.example.www</code>. Can also be used to "unreverse" a reversed host
 	 * name.
 	 * 
 	 * @param host name
@@ -462,10 +468,12 @@ public class HostToDomainGraph {
 			ids = LongBigArrays.newBigArray(maxSize);
 		}
 
+		@Override
 		protected void setValue(long id, long value) {
 			BigArrays.set(ids, id, value);
 		}
 
+		@Override
 		protected long getValue(long id) {
 			return BigArrays.get(ids, id);
 		}
