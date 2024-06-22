@@ -5,6 +5,12 @@
 package org.commoncrawl.webgraph.explore;
 
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import org.commoncrawl.webgraph.CountingMergedIntIterator;
 import org.slf4j.Logger;
@@ -125,23 +131,44 @@ public class GraphExplorer {
 		return g.graphT.outdegree((int) g.vertexMap.getLong(vertexLabel));
 	}
 
-	public long[] commonPredecessors(long[] vertices) {
-		return commonPredecessors(vertices, vertices.length);
+	public long[] sharedPredecessors(long[] vertices) {
+		return sharedPredecessors(vertices, vertices.length, vertices.length);
 	}
 
-	public long[] commonPredecessors(long[] vertices, int minCommon) {
-		return commonSuccessors(g.graphT, vertices, minCommon);
+	public long[] sharedPredecessors(long[] vertices, int minShared, int maxShared) {
+		return sharedSuccessors(g.graphT, vertices, minShared, maxShared);
 	}
 
-	public long[] commonSuccessors(long[] vertices) {
-		return commonSuccessors(vertices, vertices.length);
+	public long[] sharedSuccessors(long[] vertices) {
+		return sharedSuccessors(vertices, vertices.length, vertices.length);
 	}
 
-	public long[] commonSuccessors(long[] vertices, int minCommon) {
-		return commonSuccessors(g.graph, vertices, minCommon);
+	public long[] sharedSuccessors(long[] vertices, int minShared, int maxShared) {
+		return sharedSuccessors(g.graph, vertices, minShared, maxShared);
 	}
 
-	public long[] commonSuccessors(ImmutableGraph graph, long[] vertices, int minCommon) {
+	/**
+	 * Get shared successors (children) of all {@code vertices} in a {@code graph}.
+	 * The parameters {@code minShared} and {@code maxShared} allow to select the
+	 * intersection, the union or a subset with a specific overlap (shared
+	 * successors). If vertex <i>a</i> has the successors <i>d, e</i>, vertex
+	 * <i>b</i> has <i>d, f</i> and vertex <i>c</i> has <i>d, e, g</i>, then
+	 * <ul>
+	 * <li>{@code minShared} = {@code maxShared} = {@code vertices.length} returns
+	 * the intersection (<i>d</i>)</li>
+	 * <li>{@code minShared} = 1 and {@code maxShared} = {@code vertices.length}
+	 * returns the union (<i>d, e, f</i>)</li>
+	 * <li>{@code minShared} = {@code maxShared} = 2 returns all successors shared
+	 * by exactly two of the {@code vertices} (<i>e</i>)</li>
+	 * </ul>
+	 * 
+	 * @param graph     the webgraph used to achieve the successors
+	 * @param vertices  list of vertex IDs
+	 * @param minShared the minimum number of shared links to successors
+	 * @param maxShared the minimum number of shared links to successors
+	 * @return shared successors
+	 */
+	public long[] sharedSuccessors(ImmutableGraph graph, long[] vertices, int minShared, int maxShared) {
 		LazyIntIterator[] iters = new LazyIntIterator[vertices.length];
 		for (int i = 0; i < vertices.length; i++) {
 			iters[i] = graph.successors((int) vertices[i]);
@@ -151,7 +178,7 @@ public class GraphExplorer {
 		int id;
 		while (iter.hasNext()) {
 			id = iter.nextInt();
-			if (iter.getCount() >= minCommon) {
+			if (iter.getCount() >= minShared && iter.getCount() <= maxShared) {
 				res.add(id);
 			}
 		}
@@ -248,6 +275,24 @@ public class GraphExplorer {
 	}
 
 	/* Utilities */
+
+	public long[] loadVerticesFromFile(String fileName) {
+		try (Stream<String> in = Files.lines(Paths.get(fileName), StandardCharsets.UTF_8)) {
+			return in.mapToLong(label -> g.vertexMap.getLong(label)).filter(id -> id > -1).toArray();
+		} catch (IOException e) {
+			LOG.error("Failed to load vertices from file {}", fileName, e);
+		}
+		return new long[0];
+	}
+
+	public void saveVerticesToFile(long[] vertexIDs, String fileName) {
+		try (PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(fileName)), false,
+				StandardCharsets.UTF_8)) {
+			Arrays.stream(vertexIDs).forEach(id -> out.println(g.vertexMap.list().get((int) id)));
+		} catch (IOException e) {
+			LOG.error("Failed to load vertices from file {}", fileName, e);
+		}
+	}
 
 	private void print(String s) {
 		System.out.println(s);
