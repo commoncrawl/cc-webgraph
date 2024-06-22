@@ -18,7 +18,10 @@ import org.slf4j.LoggerFactory;
 
 import it.unimi.dsi.fastutil.io.BinIO;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.sux4j.mph.GOV4Function;
+import it.unimi.dsi.util.FrontCodedStringList;
 import it.unimi.dsi.util.ImmutableExternalPrefixMap;
+import it.unimi.dsi.util.ShiftAddXorSignedStringMap;
 import it.unimi.dsi.webgraph.ImmutableGraph;
 import it.unimi.dsi.webgraph.LazyIntIterator;
 
@@ -35,17 +38,62 @@ public class GraphExplorer {
 		public ImmutableGraph graph;
 		public ImmutableGraph graphT;
 		public ImmutableExternalPrefixMap vertexMap;
+		public FrontCodedStringList vertexMapFcl;
+		public ShiftAddXorSignedStringMap vertexMapSmph;
+		public GOV4Function<String> vertexMapMph;
 
-		public Graph(String name) {
+		public Graph(String name) throws Exception {
 			this.name = name;
 			try {
+				LOG.info("Loading graph {}.graph", name);
 				graph = ImmutableGraph.loadMapped(name);
+				LOG.info("Loading transpose of the graph {}-t.graph", name);
 				graphT = ImmutableGraph.loadMapped(name + "-t");
-				vertexMap = (ImmutableExternalPrefixMap) BinIO.loadObject(name + ".iepm");
+				if (Files.exists(Paths.get(name + ".iepm"))) {
+					LOG.info("Loading vertex map {}.iepm (ImmutableExternalPrefixMap)", name);
+					vertexMap = (ImmutableExternalPrefixMap) BinIO.loadObject(name + ".iepm");
+				} else if (Files.exists(Paths.get(name + ".fcl"))) {
+					LOG.info("Loading vertex map {}.fcl (FrontCodedStringList, maps vertex IDs to labels)", name);
+					vertexMapFcl = (FrontCodedStringList) BinIO.loadObject(name + ".fcl");
+					if (Files.exists(Paths.get(name + ".smph"))) {
+						LOG.info("Loading vertex map {}.smph (string map perfect hash, maps vertex labels to IDs)", name);
+						vertexMapSmph = (ShiftAddXorSignedStringMap) BinIO.loadObject(name + ".smph");
+					} else if (Files.exists(Paths.get(name + ".mph"))) {
+						LOG.info("Loading vertex map {}.mph (minimal perfect hash, maps vertex labels to IDs)", name);
+						vertexMapMph = (GOV4Function<String>) BinIO.loadObject(name + ".mph");
+						LOG.warn(
+								"Using a minimal perfect hash as vertex map does not allow to verify that a vertex label exists. "
+										+ "Non-existant labels are mapped to quasi-random IDs.");
+					} else {
+						LOG.error("No vertex mapping found, cannot translate from vertex names to IDs.");
+					}
+				} else {
+					LOG.error("No vertex mapping found, cannot translate from vertex names to IDs.");
+				}
 			} catch (IOException | ClassNotFoundException e) {
 				LOG.error("Failed to load graph {}:", name, e);
+				throw e;
 			}
-			// TODO: fall-back: instead of .iepm load .mph .fcl .smph
+		}
+
+		public String vertexIdToLabel(long id) {
+			if (g.vertexMap != null) {
+				return g.vertexMap.list().get((int) id).toString();
+			} else {
+				return g.vertexMapFcl.get((int) id).toString();
+			}
+		}
+
+		public long vertexLabelToId(String label) {
+			if (g.vertexMap != null) {
+				return g.vertexMap.getLong(label);
+			} else if (g.vertexMapSmph != null) {
+				return g.vertexMapSmph.getLong(label);
+			} else if (g.vertexMapMph != null) {
+				return g.vertexMapMph.getLong(label);
+			} else {
+				throw new RuntimeException("No vertex map loaded.");
+			}
 		}
 	}
 
@@ -55,12 +103,12 @@ public class GraphExplorer {
 
 		public Vertex(String label) {
 			this.label = label;
-			id = g.vertexMap.getLong(label);
+			id = g.vertexLabelToId(label);
 		}
 
 		public Vertex(long id) {
 			this.id = id;
-			label = g.vertexMap.list().get((int) id).toString();
+			label = g.vertexIdToLabel(id);
 		}
 
 		@Override
@@ -88,7 +136,7 @@ public class GraphExplorer {
 	private Graph g = null;
 	private Vertex v = null;
 
-	public GraphExplorer(String name) {
+	public GraphExplorer(String name) throws Exception {
 		g = new Graph(name);
 	}
 
@@ -119,7 +167,7 @@ public class GraphExplorer {
 		return g.graph.outdegree((int) vertexId);
 	}
 	public int outdegree(String vertexLabel) {
-		return g.graph.outdegree((int) g.vertexMap.getLong(vertexLabel));
+		return g.graph.outdegree((int) g.vertexLabelToId(vertexLabel));
 	}
 	public int indegree() {
 		return v.indegree();
@@ -128,7 +176,7 @@ public class GraphExplorer {
 		return g.graphT.outdegree((int) vertexId);
 	}
 	public int indegree(String vertexLabel) {
-		return g.graphT.outdegree((int) g.vertexMap.getLong(vertexLabel));
+		return g.graphT.outdegree((int) g.vertexLabelToId(vertexLabel));
 	}
 
 	public long[] sharedPredecessors(long[] vertices) {
@@ -243,7 +291,7 @@ public class GraphExplorer {
 	 * @param vertexLabel vertex label / vertex name
 	 */
 	public void ls(String vertexLabel) {
-		ls(g.vertexMap.getLong(vertexLabel));
+		ls(g.vertexLabelToId(vertexLabel));
 	}
 
 	/**
@@ -271,14 +319,14 @@ public class GraphExplorer {
 	 * @param vertexLabel vertex label / vertex name
 	 */
 	public void sl(String vertexLabel) {
-		sl(g.vertexMap.getLong(vertexLabel));
+		sl(g.vertexLabelToId(vertexLabel));
 	}
 
 	/* Utilities */
 
 	public long[] loadVerticesFromFile(String fileName) {
 		try (Stream<String> in = Files.lines(Paths.get(fileName), StandardCharsets.UTF_8)) {
-			return in.mapToLong(label -> g.vertexMap.getLong(label)).filter(id -> id > -1).toArray();
+			return in.mapToLong(label -> g.vertexLabelToId(label)).filter(id -> id > -1).toArray();
 		} catch (IOException e) {
 			LOG.error("Failed to load vertices from file {}", fileName, e);
 		}
@@ -288,7 +336,7 @@ public class GraphExplorer {
 	public void saveVerticesToFile(long[] vertexIDs, String fileName) {
 		try (PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(fileName)), false,
 				StandardCharsets.UTF_8)) {
-			Arrays.stream(vertexIDs).forEach(id -> out.println(g.vertexMap.list().get((int) id)));
+			Arrays.stream(vertexIDs).forEach(id -> out.println(g.vertexIdToLabel(id)));
 		} catch (IOException e) {
 			LOG.error("Failed to load vertices from file {}", fileName, e);
 		}
