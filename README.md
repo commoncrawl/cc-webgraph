@@ -49,7 +49,7 @@ The shell script is easily adapted to your needs. Please refer to the [LAW datas
 
 The Common Crawl webgraph data sets are announced on the [Common Crawl web site](https://commoncrawl.org/tag/webgraph/).
 
-Instructions how to explore the webgraphs are given in the [cc-notebooks project](//github.com/commoncrawl/cc-notebooks/tree/master/cc-webgraph-statistics).
+For instructions how to explore the webgraphs using the JShell please see the tutorial [Interactive Graph Exploration](./graph-exploration-README.md). For an older approach using [Jython](https://www.jython.org/) and [pyWebGraph](https://github.com/mapio/py-web-graph), see the [cc-notebooks project](//github.com/commoncrawl/cc-notebooks/tree/master/cc-webgraph-statistics).
 
 
 ## Credits
