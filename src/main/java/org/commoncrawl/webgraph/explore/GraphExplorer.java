@@ -10,6 +10,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.commoncrawl.webgraph.CountingMergedIntIterator;
@@ -46,11 +51,11 @@ public class GraphExplorer {
 		}
 
 		public int outdegree() {
-			return g.graph.outdegree((int) id);
+			return g.outdegree((int) id);
 		}
 
 		public int indegree() {
-			return g.graphT.outdegree((int) id);
+			return g.indegree((int) id);
 		}
 
 		public int[] successors() {
@@ -89,7 +94,6 @@ public class GraphExplorer {
 		v = getVertex(vertexId);
 	}
 
-
 	/* Reimplementation of commands provided by pywebgraph (cn, pwn, ls, sl) */
 
 	/**
@@ -117,7 +121,7 @@ public class GraphExplorer {
 	 */
 	public void pwn() {
 		if (v == null) {
-			throw new NullPointerException("Current orking node not set, use cn(...) to define the working node.");
+			throw new NullPointerException("Current working node not set, use cn(...) to define the working node.");
 		}
 		print(v.toString());
 	}
@@ -127,7 +131,7 @@ public class GraphExplorer {
 	 */
 	public void ls() {
 		if (v == null) {
-			throw new NullPointerException("Current orking node not set, use cn(...) to define the working node.");
+			throw new NullPointerException("Current working node not set, use cn(...) to define the working node.");
 		}
 		ls(v.id);
 	}
@@ -155,7 +159,7 @@ public class GraphExplorer {
 	 */
 	public void sl() {
 		if (v == null) {
-			throw new NullPointerException("Current orking node not set, use cn(...) to define the working node.");
+			throw new NullPointerException("Current working node not set, use cn(...) to define the working node.");
 		}
 		sl(v.id);
 	}
@@ -178,7 +182,6 @@ public class GraphExplorer {
 		sl(g.vertexLabelToId(vertexLabel));
 	}
 
-
 	/* Utilities */
 
 	public long[] loadVerticesFromFile(String fileName) {
@@ -195,7 +198,34 @@ public class GraphExplorer {
 				StandardCharsets.UTF_8)) {
 			Arrays.stream(vertexIDs).forEach(id -> out.println(g.vertexIdToLabel(id)));
 		} catch (IOException e) {
-			LOG.error("Failed to load vertices from file {}", fileName, e);
+			LOG.error("Failed to write vertices to file {}", fileName, e);
+		}
+	}
+
+	public void saveVerticesToFile(int[] vertexIDs, String fileName) {
+		saveVerticesToFile(Arrays.stream(vertexIDs), fileName);
+	}
+
+	public void saveVerticesToFile(IntStream vertexIDs, String fileName) {
+		try (PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(fileName)), false,
+				StandardCharsets.UTF_8)) {
+			vertexIDs.forEach(id -> out.println(g.vertexIdToLabel(id)));
+		} catch (IOException e) {
+			LOG.error("Failed to write vertices to file {}", fileName, e);
+		}
+	}
+
+	public void saveCountsToFile(Stream<Entry<String, Long>> counts, String fileName) {
+		try (PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(fileName)), false,
+				StandardCharsets.UTF_8)) {
+			counts.forEach(c -> {
+				out.print(c.getValue());
+				out.print('\t');
+				out.print(c.getKey());
+				out.print('\n');
+			});
+		} catch (IOException e) {
+			LOG.error("Failed to write counts to file {}", fileName, e);
 		}
 	}
 
@@ -206,7 +236,7 @@ public class GraphExplorer {
 	public void printVertices(LazyIntIterator it) {
 		int next = it.nextInt();
 		int i = 0;
-		while (next != CountingMergedIntIterator.EMPTY_INPUT_ITERATOR_VALUE) {
+		while (next != CountingMergedIntIterator.LAZY_INT_ITERATOR_EMPTY_VALUE) {
 			print(String.format("%d: %s", i, (new Vertex(next)).toString()));
 			next = it.nextInt();
 			i++;
@@ -227,5 +257,20 @@ public class GraphExplorer {
 			print(String.format("%d: %s", i, (new Vertex(id)).toString()));
 			i++;
 		}
+	}
+
+	/**
+	 * Count strings in a stream. Sort the resulting string-count pairs by
+	 * decreasing count (frequency) and secondarily by string in lexicographic
+	 * order.
+	 * 
+	 * @param strings stream of strings
+	 * @return stream of pairs {@code <string, count>}
+	 */
+	public static Stream<Entry<String, Long>> frequencies(Stream<String> strings) {
+		final Comparator<Entry<String, Long>> comp = Comparator.comparingLong((Entry<String, Long> e) -> e.getValue())
+				.reversed().thenComparing(Comparator.comparing((Entry<String, Long> e) -> e.getKey()));
+		return strings.collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).entrySet().stream()
+				.sorted(comp);
 	}
 }

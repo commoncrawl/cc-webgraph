@@ -43,7 +43,7 @@ public class CountingMergedIntIterator implements IntIterator {
 		}
 	}
 
-	public static int EMPTY_INPUT_ITERATOR_VALUE = LazyIntIterators.EMPTY_ITERATOR.nextInt();
+	public static int LAZY_INT_ITERATOR_EMPTY_VALUE = LazyIntIterators.EMPTY_ITERATOR.nextInt();
 
 	private final PriorityQueue<QueuedIterator> iters = new PriorityQueue<>();
 	private int currentCount = 0;
@@ -54,7 +54,7 @@ public class CountingMergedIntIterator implements IntIterator {
 	public CountingMergedIntIterator(LazyIntIterator... iterators) {
 		for (final LazyIntIterator iter : iterators) {
 			final QueuedIterator qiter = new QueuedIterator(iter);
-			if (qiter.value != EMPTY_INPUT_ITERATOR_VALUE) {
+			if (qiter.value != LAZY_INT_ITERATOR_EMPTY_VALUE) {
 				iters.add(qiter);
 			}
 		}
@@ -93,7 +93,7 @@ public class CountingMergedIntIterator implements IntIterator {
 			while ((val = qiter.iter.nextInt()) == value) {
 				count++;
 			}
-			if (val != EMPTY_INPUT_ITERATOR_VALUE) {
+			if (val != LAZY_INT_ITERATOR_EMPTY_VALUE) {
 				qiter.value = val;
 				iters.add(qiter);
 			}
