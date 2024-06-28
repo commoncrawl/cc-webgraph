@@ -28,3 +28,6 @@ hs_err_pid*
 .project
 .classpath
 .settings/
+
+# macOS Desktop Services Store
+.DS_Store
