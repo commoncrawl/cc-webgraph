@@ -129,6 +129,39 @@ function join_ranks_in_memory() (
       | sort $SORTOPTS -t$'\t' -k1,1n --stable | gzip >$_OUT
 )
 
+function join_degrees() (
+    set -exo pipefail
+    _FULLNAME="$1"
+    _VERT="$2"
+    HEADER="#outdegree\t#indegree\t#host_rev"
+    if [ -n "$3" ]; then
+        HEADER="$HEADER\t$3"
+    fi
+    if [ -d $_VERT ]; then
+        # _VERT is a directory with multiple vertices files
+        _VERT="$_VERT/*.gz"
+    fi
+    zcat $_VERT \
+        | cut -f2- \
+        | paste $FULLNAME.outdegrees $FULLNAME.indegrees - \
+        | gzip >$FULLNAME-outdegrees-indegrees.txt.gz
+    # top-N out/indegrees
+    (echo -e "$HEADER";
+     set +o pipefail;
+     zcat $FULLNAME-outdegrees-indegrees.txt.gz \
+         | perl -aF'\t' -lne 'print if $F[0] > 1000' \
+         | sort -k1,1nr \
+         | head -10000) \
+        | gzip >$FULLNAME-outdegrees-indegrees-topout.txt.gz
+    (echo -e "$HEADER";
+     set +o pipefail;
+     zcat $FULLNAME-outdegrees-indegrees.txt.gz \
+         | perl -aF'\t' -lne 'print if $F[1] > 1000' \
+         | sort -k2,2nr \
+         | head -10000) \
+        | gzip >$FULLNAME-outdegrees-indegrees-topin.txt.gz
+)
+
 function connected_distrib() (
     set -exo pipefail
     NUM_NODES=$1
@@ -264,6 +297,9 @@ fi
 
 _step stats \
          $WG $WGP.Stats --save-degrees $FULLNAME
+
+_step_bg join_degrees 15 \
+         join_degrees $FULLNAME $VERTICES "$EXTRA_FIELDS_HEADER"
 
 NODES=$(perl -lne 'print if s@^nodes=@@' $FULLNAME.stats)
 _step connected_distrib \
