@@ -87,7 +87,7 @@ if ! [ -e $NAME.offsets ]; then
 fi
 if ! [ -e $NAME-t.offsets ]; then
     "$WG" it.unimi.dsi.webgraph.BVGraph -O -L $NAME-t
-    echo "webgraph offsets (transfile created"
+    echo "webgraph offsets file created (transpose of the graph)"
 fi
 
 

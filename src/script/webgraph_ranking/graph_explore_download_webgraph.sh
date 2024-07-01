@@ -50,7 +50,8 @@ function download_file() {
     fi
     URL="https://data.commoncrawl.org/projects/hyperlinkgraph/$BASE_NAME/$GRAPH_AGGR_LEVEL/$FILE"
     echo "Downloading $URL"
-    wget "$URL"
+    # wget --continue --timestamping "$URL"
+    curl --silent --remote-time -o "$FILE" --time-cond "$FILE" --continue-at - "$URL"
 }
 
 function download_files() {
