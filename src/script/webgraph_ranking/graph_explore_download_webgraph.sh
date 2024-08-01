@@ -66,14 +66,16 @@ function download_file() {
 
     if $USING_CURL; then
 
-        curl --silent --remote-time -o "$FILE" --time-cond "$FILE" --continue-at - "$URL"
+        curl --silent --remote-time -o "$FILE" --time-cond "$FILE" --continue-at - \
+             --retry 1000 --retry-all-errors --retry-delay 1 "$URL"
 
     elif $USING_WGET; then
 
         if [ "$(dirname "$FILE")" == "." ]; then
-            wget --continue --timestamping "$URL"
+            wget --continue --timestamping --tries=0 --retry-on-http-error=503 --waitretry=1 "$URL"
         else
-            wget --continue --timestamping --directory-prefix="$(dirname "$FILE")" "$URL"
+            wget --continue --timestamping --directory-prefix="$(dirname "$FILE")" \
+                 --tries=0 --retry-on-http-error=503 --waitretry=1 "$URL"
         fi
 
     fi
