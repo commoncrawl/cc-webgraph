@@ -17,12 +17,12 @@
 		<webgraph.version>3.6.10</webgraph.version>
 		<webgraph.big.version>3.7.0</webgraph.big.version>
 		<law.version>2.7.2</law.version>
-		<fastutil.version>8.5.13</fastutil.version>
+		<fastutil.version>8.5.15</fastutil.version>
 		<crawler.commons.version>1.4</crawler.commons.version>
 
-		<slf4j-api.version>2.0.12</slf4j-api.version>
+		<slf4j-api.version>2.0.16</slf4j-api.version>
 
-		<junit.version>5.10.2</junit.version>
+		<junit.version>5.11.2</junit.version>
 	</properties>
 
 	<build>
