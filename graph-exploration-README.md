@@ -13,7 +13,7 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
    $> mvn clean package
 
    $> CC_WEBGRAPH="$PWD"
-   $> CC_WEBGRAPH_JAR="$PWD"/target/cc-webgraph-*-jar-with-dependencies.jar
+   $> CC_WEBGRAPH_JAR=$(ls "$PWD"/target/cc-webgraph-*-jar-with-dependencies.jar)
    ```
 
 2. select a web graph you want to explore, choose a download directory and download the web graph
