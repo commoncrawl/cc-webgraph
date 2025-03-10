@@ -66,8 +66,9 @@ function download_file() {
 
     if $USING_CURL; then
 
-        curl --silent --remote-time -o "$FILE" --time-cond "$FILE" --continue-at - \
-             --retry 1000 --retry-all-errors --retry-delay 1 "$URL"
+        curl --silent --show-error --fail \
+             --remote-time -o "$FILE" --time-cond "$FILE" --continue-at - \
+             --retry 1000 --retry-delay 1 "$URL"
 
     elif $USING_WGET; then
 
@@ -93,6 +94,8 @@ BASE_NAME="${NAME%-domain}"
 BASE_NAME="${BASE_NAME%-host}"
 GRAPH_AGGR_LEVEL="${NAME##*-}"
 
+
+set -e # stop on errors
 
 download_files "$NAME" graph properties stats
 download_files "$NAME-t" graph properties
