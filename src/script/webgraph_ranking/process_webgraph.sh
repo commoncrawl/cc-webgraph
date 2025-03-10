@@ -8,17 +8,31 @@ if ! shift 3; then
     exit 1
 fi
 
+if ! [[ "$NAME" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]+[a-zA-Z0-9_]$ ]]; then
+    echo "Graph <name> should only contain [a-zA-Z0-9_.-] and start and end with [a-zA-Z0-9_]."
+    echo "The graph name '$NAME' might not be safe as a graph base name (without suffix)"
+    echo "or directory name to place the graph files into. Exiting..."
+    exit 1
+fi
+
 OUTPUTDIR="$NAME"
 if [ -n "$1" ]; then
     OUTPUTDIR="$1"
     shift
+    case "$OUTPUTDIR" in
+        *" "* )
+            echo "The output directory <output_dir> must not contain white space. Exiting..."
+            exit 1
+            ;;
+    esac
 fi
 FULLNAME="$OUTPUTDIR/$NAME"
 
+
+set -e # fail if creation of output directory fails
+
 if [ -d "$OUTPUTDIR" ]; then
-    # TODO: OUTPUTDIR must not contain whitespace, '/', etc.
     echo "Output directory $OUTPUTDIR/ exists"
-    # exit 1
 else
     mkdir "$OUTPUTDIR"
 fi
