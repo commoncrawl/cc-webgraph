@@ -84,20 +84,20 @@ if ! [ -e $VERTICES ]; then
 fi
 
 
-# generate offsets
+# generate offsets (*.offsets and *.obl)
 if ! [ -e $NAME.offsets ]; then
-    "$WG" it.unimi.dsi.webgraph.BVGraph -O -L $NAME
+    "$WG" it.unimi.dsi.webgraph.BVGraph --offsets --list $NAME
     echo "webgraph offsets file created"
 fi
 if ! [ -e $NAME-t.offsets ]; then
-    "$WG" it.unimi.dsi.webgraph.BVGraph -O -L $NAME-t
+    "$WG" it.unimi.dsi.webgraph.BVGraph --offsets --list $NAME-t
     echo "webgraph offsets file created (transpose of the graph)"
 fi
 
 
 # building `iepm` "immutable external prefix map"
 # (https://dsiutils.di.unimi.it/docs/it/unimi/dsi/util/ImmutableExternalPrefixMap.html)
-# mapping back and forth node names to numbers
+# bidirectional mapping from node names to node IDs
 if [ -e $NAME.iepm ]; then
     index_status
     exit 0
@@ -110,7 +110,7 @@ fi
 if (set -eo pipefail;
     eval $CAT_VERTICES \
         | cut -f2 \
-        | "$WG" it.unimi.dsi.util.ImmutableExternalPrefixMap -b4Ki $NAME.iepm); then
+        | "$WG" it.unimi.dsi.util.ImmutableExternalPrefixMap --block-size 4Ki $NAME.iepm); then
     echo "immutable external prefix map successfully built: $NAME.iepm"
     index_status
     exit 0
@@ -129,7 +129,7 @@ if ! [ -e $NAME.mph ] || ! [ -e $NAME.fcl ]; then
     zcat $VERTICES \
         | cut -f2 \
         | tee >("$WG" it.unimi.dsi.sux4j.mph.GOV4Function $NAME.mph) \
-        | "$WG" it.unimi.dsi.util.FrontCodedStringList -u -r 32 $NAME.fcl
+        | "$WG" it.unimi.dsi.util.FrontCodedStringList --utf8 --ratio 32 $NAME.fcl
 fi
 
 # build the `smph` file (string map perfect hash) required to
