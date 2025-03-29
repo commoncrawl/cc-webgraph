@@ -70,7 +70,7 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
    ```
    $> jshell --class-path $CC_WEBGRAPH/target/cc-webgraph-*-jar-with-dependencies.jar \
              -R-Dgraph=$GRAPH \
-             $CC_WEBRAPH/src/script/webgraph_ranking/graph_explore_load_graph.jsh
+             $CC_WEBGRAPH/src/script/webgraph_ranking/graph_explore_load_graph.jsh
    Loading graph cc-main-2024-feb-apr-may-domain
    2024-06-23 13:30:14:134 +0200 [main] INFO Graph - Loading graph cc-main-2024-feb-apr-may-domain.graph
    2024-06-23 13:30:14:340 +0200 [main] INFO Graph - Loading transpose of the graph cc-main-2024-feb-apr-may-domain-t.graph
@@ -127,7 +127,7 @@ We start again with launching the JShell and loading a webgraph:
 ```
 $> jshell --class-path $CC_WEBGRAPH/target/cc-webgraph-*-jar-with-dependencies.jar \
           -R-Dgraph=$GRAPH \
-          $CC_WEBRAPH/src/script/webgraph_ranking/graph_explore_load_graph.jsh
+          $CC_WEBGRAPH/src/script/webgraph_ranking/graph_explore_load_graph.jsh
 jshell> 
 ```
 
