@@ -31,6 +31,7 @@ import it.unimi.dsi.sux4j.mph.GOV4Function;
 import it.unimi.dsi.util.FrontCodedStringList;
 import it.unimi.dsi.util.ImmutableExternalPrefixMap;
 import it.unimi.dsi.util.Interval;
+import it.unimi.dsi.util.LiterallySignedStringMap;
 import it.unimi.dsi.util.ShiftAddXorSignedStringMap;
 import it.unimi.dsi.webgraph.ImmutableGraph;
 import it.unimi.dsi.webgraph.LazyIntIterator;
@@ -56,6 +57,7 @@ public class Graph {
 	protected FrontCodedStringList vertexMapFcl;
 	protected ShiftAddXorSignedStringMap vertexMapSmph;
 	protected GOV4Function<String> vertexMapMph;
+	protected LiterallySignedStringMap vertexMapLmap;
 
 	private static int LAZY_INT_ITERATOR_EMPTY_VALUE = LazyIntIterators.EMPTY_ITERATOR.nextInt();
 
@@ -84,6 +86,9 @@ public class Graph {
 				} else {
 					LOG.error("No vertex mapping found, cannot translate from vertex names to IDs.");
 				}
+			} else if (Files.exists(Paths.get(name + ".lmap"))) {
+				LOG.info("Loading vertex map {}.lmap (LiterallySignedStringMap)", name);
+				vertexMapLmap = (LiterallySignedStringMap) BinIO.loadObject(name + ".lmap");
 			} else {
 				LOG.error("No vertex mapping found, cannot translate from vertex names to IDs.");
 			}
@@ -97,8 +102,12 @@ public class Graph {
 	public String vertexIdToLabel(long id) {
 		if (vertexMap != null) {
 			return vertexMap.list().get((int) id).toString();
-		} else {
+		} else if (vertexMapFcl != null) {
 			return vertexMapFcl.get((int) id).toString();
+		} else if (vertexMapLmap != null) {
+			return vertexMapLmap.list().get((int) id).toString();
+		} else {
+			throw new RuntimeException("No vertex map loaded.");
 		}
 	}
 
@@ -109,6 +118,8 @@ public class Graph {
 			return vertexMapSmph.getLong(label);
 		} else if (vertexMapMph != null) {
 			return vertexMapMph.getLong(label);
+		} else if (vertexMapLmap != null) {
+			return vertexMapLmap.getLong(label);
 		} else {
 			throw new RuntimeException("No vertex map loaded.");
 		}
@@ -221,7 +232,7 @@ public class Graph {
 			List<Entry<String, Long>> res = new LinkedList<>();
 			PrimitiveIterator.OfInt iter = vertexIds.iterator();
 			if (iter.hasNext()) {
-				int curr = iter.nextInt();;
+				int curr = iter.nextInt();
 				do {
 					final MutableString currLabel = vertexMap.list().get(curr);
 					final int pos = currLabel.indexOf('.');
@@ -397,7 +408,7 @@ public class Graph {
 	 *         "https://en.wikipedia.org/wiki/Reverse_domain_name_notation">reverse
 	 *         domain name notation</a> (un)applied
 	 */
-	private static String reverseDomainName(String reversedDomainName) {
+	public static String reverseDomainName(String reversedDomainName) {
 		return HostToDomainGraph.reverseHost(reversedDomainName);
 	}
 }
