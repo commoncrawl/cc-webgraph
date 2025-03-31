@@ -11,7 +11,7 @@ The Java tools are compiled and packaged by [Maven](https://maven.apache.org/). 
 java -cp target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar <classname> <args>...
 ```
 
-The assembly jar file includes also the [WebGraph](https://webgraph.di.unimi.it/) and [LAW](https://law.di.unimi.it/software.php) packages required to compute [PageRank](https://en.wikipedia.org/wiki/PageRank) and [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality).
+The assembly jar file includes also the [WebGraph](https://webgraph.di.unimi.it/) and [LAW](https://law.di.unimi.it/software.php) packages required to process the webgraphs and compute [PageRank](https://en.wikipedia.org/wiki/PageRank) or [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality).
 
 
 ### Javadocs

@@ -403,12 +403,12 @@ public class Graph {
 	 * Reverse or "unreverse" a host/domain name: <code>com.example.www</code> is
 	 * reversed to <code>www.example.com</code> and vice versa.
 	 * 
-	 * @param domain name
+	 * @param domainName domain name
 	 * @return domain name with <a href=
 	 *         "https://en.wikipedia.org/wiki/Reverse_domain_name_notation">reverse
 	 *         domain name notation</a> (un)applied
 	 */
-	public static String reverseDomainName(String reversedDomainName) {
-		return HostToDomainGraph.reverseHost(reversedDomainName);
+	public static String reverseDomainName(String domainName) {
+		return HostToDomainGraph.reverseHost(domainName);
 	}
 }
