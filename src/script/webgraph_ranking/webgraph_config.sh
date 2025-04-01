@@ -11,33 +11,28 @@ USE_WEBGRAPH_BIG=${USE_WEBGRAPH_BIG:-false}
 JOIN_RANKS_IN_MEMORY=${JOIN_RANKS_IN_MEMORY:-true}
 
 
-# number of threads and Hyperball registers
-# depend on the size of the machine (here EC2 instance)
-# ... and of the graph to be processed
-# => it's only an empirical value and possibly needs to be adjusted
-THREADS=${THREADS:-2}
-HYP_REG=4
-## on r4.8xlarge (244 GB)
-#THREADS=32
-#HYP_REG=4   # 4-5 for hostgraph, 10 for domain graph
-## on r4.16xlarge (488 GB)
-#THREADS=64
-#HYP_REG=5   # 4-6 for hostgraph, 10 for domain graph
-## on r5.12xlarge (384 GB)
-#THREADS=48
-#HYP_REG=5   # 4-6 for hostgraph, 10 for domain graph
-## on x1.16xlarge (976 GB)
-#THREADS=64
-#HYP_REG=9
-## on x1.32xlarge (1952 GB)
-#THREADS=128
-#HYP_REG=10
-
-# determine automatically, using java.lang.Runtime.availableProcessors()
-# THREADS=0
-
 # number of registers used for Hyperball / harmonic centrality calculation
+#
+# The number of Hyperball registers depend on
+# - the size of the machine (here EC2 instance)
+# - and of the graph to be processed
+# => it's an empirically determined value and
+#    possibly needs to be adjusted
+# It can be overridden by the environment variable
+# HYPERBALL_REGISTERS, see below.
+HYP_REG=12
+## on r8.24.xlarge (768 GB, 96 CPUs)
+#HYP_REG=10 (host-level graph, 300M nodes)
+#HYP_REG=12 (domain-level graph, 130M nodes)
+
 HYPERBALL_REGISTERS=${HYPERBALL_REGISTERS:-$HYP_REG}
+
+# number of threads
+# THREAD=0 : let the webgraph tools decide how many threads,
+#            given the available CPU cores, using
+#            java.lang.Runtime.availableProcessors()
+THREADS=${THREADS:-0}
+
 
 
 # number of fields in vertices file(s)
