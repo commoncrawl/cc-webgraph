@@ -1,6 +1,6 @@
 # cc-webgraph
 
-Tools to construct and process web graphs from Common Crawl data
+Tools to construct web graphs from Common Crawl data, process and explore them.
 
 ## Compiling and Packaging Java Tools
 

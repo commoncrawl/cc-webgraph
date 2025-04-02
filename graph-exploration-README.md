@@ -5,7 +5,7 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
 
 ## Quick Start
 
-1. change into the "cc-webgraph" project directory, [build the cc-webgraph jar](README.md#compiling-and-packaging-java-tools) and remember the project directory using an environment variable
+1. change into the "cc-webgraph" project directory, [build the cc-webgraph JAR](README.md#compiling-and-packaging-java-tools) and remember the project directory and the JAR using environment variables:
 
    ```
    $> cd .../cc-webgraph
@@ -13,6 +13,7 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
    $> mvn clean package
 
    $> CC_WEBGRAPH=$PWD
+   $> CC_WEBGRAPH_JAR=$PWD/target/cc-webgraph-*-jar-with-dependencies.jar
    ```
 
 2. select a web graph you want to explore, choose a download directory and download the web graph
@@ -39,7 +40,7 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
 4. Launch the [JShell](https://docs.oracle.com/en/java/javase/21/jshell/index.html)
 
    ```
-   $> jshell --class-path $CC_WEBGRAPH/target/cc-webgraph-*-jar-with-dependencies.jar
+   $> jshell --class-path $CC_WEBGRAPH_JAR
    |  Welcome to JShell -- Version 21.0.3
    |  For an introduction type: /help intro
    
@@ -68,7 +69,7 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
    To make the loading easier, you may use the load script [graph_explore_load_graph.jsh](src/script/webgraph_ranking/graph_explore_load_graph.jsh) and pass the graph name as a Java property to the JShell via command-line option `-R-Dgraph=$GRAPH`
 
    ```
-   $> jshell --class-path $CC_WEBGRAPH/target/cc-webgraph-*-jar-with-dependencies.jar \
+   $> jshell --class-path $CC_WEBGRAPH_JAR \
              -R-Dgraph=$GRAPH \
              $CC_WEBGRAPH/src/script/webgraph_ranking/graph_explore_load_graph.jsh
    Loading graph cc-main-2024-feb-apr-may-domain
@@ -125,7 +126,7 @@ The methods are bundled in the classes of the Java package `org.commoncrawl.webg
 We start again with launching the JShell and loading a webgraph:
 
 ```
-$> jshell --class-path $CC_WEBGRAPH/target/cc-webgraph-*-jar-with-dependencies.jar \
+$> jshell --class-path $CC_WEBGRAPH_JAR \
           -R-Dgraph=$GRAPH \
           $CC_WEBGRAPH/src/script/webgraph_ranking/graph_explore_load_graph.jsh
 jshell> 
