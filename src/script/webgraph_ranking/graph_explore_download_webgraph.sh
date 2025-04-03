@@ -100,7 +100,7 @@ set -e # stop on errors
 download_files "$NAME" graph properties stats
 download_files "$NAME-t" graph properties
 
-if [ $GRAPH_AGGR_LEVEL == "domain" ]; then
+if [ "$GRAPH_AGGR_LEVEL" == "domain" ]; then
     download_files "$NAME-vertices" txt.gz
 else
     download_files "$NAME-vertices" paths.gz
@@ -118,7 +118,7 @@ list_webgraph_files $NAME graph properties stats
 echo "- webgraph (transpose)"
 list_webgraph_files $NAME-t graph properties
 echo "- webgraph vertices"
-if [ $GRAPH_AGGR_LEVEL == "domain" ]; then
+if [ "$GRAPH_AGGR_LEVEL" == "domain" ]; then
     list_webgraph_files $NAME-vertices txt.gz
 else
     list_webgraph_files vertices "*.txt.gz"
