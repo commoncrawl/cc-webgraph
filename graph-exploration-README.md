@@ -12,8 +12,8 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
 
    $> mvn clean package
 
-   $> CC_WEBGRAPH=$PWD
-   $> CC_WEBGRAPH_JAR=$PWD/target/cc-webgraph-*-jar-with-dependencies.jar
+   $> CC_WEBGRAPH="$PWD"
+   $> CC_WEBGRAPH_JAR="$PWD"/target/cc-webgraph-*-jar-with-dependencies.jar
    ```
 
 2. select a web graph you want to explore, choose a download directory and download the web graph
@@ -28,19 +28,19 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
    About 15 GiB disk are needed to hold all files of a domain-level webgraph.
 
    ```
-   $> $CC_WEBGRAPH/src/script/webgraph_ranking/graph_explore_download_webgraph.sh $GRAPH
+   $> "$CC_WEBGRAPH"/src/script/webgraph_ranking/graph_explore_download_webgraph.sh $GRAPH
    ```
 
 3. Build the map from vertex label to vertex ID and vice versa. This allows to look up a reverse domain name (e.g. "org.commoncrawl") and get the corresponding vertex ID.
 
    ```
-   $> $CC_WEBGRAPH/src/script/webgraph_ranking/graph_explore_build_vertex_map.sh $GRAPH $GRAPH-vertices.txt.gz
+   $> "$CC_WEBGRAPH"/src/script/webgraph_ranking/graph_explore_build_vertex_map.sh $GRAPH $GRAPH-vertices.txt.gz
    ```
 
 4. Launch the [JShell](https://docs.oracle.com/en/java/javase/21/jshell/index.html)
 
    ```
-   $> jshell --class-path $CC_WEBGRAPH_JAR
+   $> jshell --class-path "$CC_WEBGRAPH_JAR"
    |  Welcome to JShell -- Version 21.0.3
    |  For an introduction type: /help intro
    
@@ -69,9 +69,9 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
    To make the loading easier, you may use the load script [graph_explore_load_graph.jsh](src/script/webgraph_ranking/graph_explore_load_graph.jsh) and pass the graph name as a Java property to the JShell via command-line option `-R-Dgraph=$GRAPH`
 
    ```
-   $> jshell --class-path $CC_WEBGRAPH_JAR \
+   $> jshell --class-path "$CC_WEBGRAPH_JAR" \
              -R-Dgraph=$GRAPH \
-             $CC_WEBGRAPH/src/script/webgraph_ranking/graph_explore_load_graph.jsh
+             "$CC_WEBGRAPH"/src/script/webgraph_ranking/graph_explore_load_graph.jsh
    Loading graph cc-main-2024-feb-apr-may-domain
    2024-06-23 13:30:14:134 +0200 [main] INFO Graph - Loading graph cc-main-2024-feb-apr-may-domain.graph
    2024-06-23 13:30:14:340 +0200 [main] INFO Graph - Loading transpose of the graph cc-main-2024-feb-apr-may-domain-t.graph
@@ -126,9 +126,9 @@ The methods are bundled in the classes of the Java package `org.commoncrawl.webg
 We start again with launching the JShell and loading a webgraph:
 
 ```
-$> jshell --class-path $CC_WEBGRAPH_JAR \
+$> jshell --class-path "$CC_WEBGRAPH_JAR" \
           -R-Dgraph=$GRAPH \
-          $CC_WEBGRAPH/src/script/webgraph_ranking/graph_explore_load_graph.jsh
+          "$CC_WEBGRAPH"/src/script/webgraph_ranking/graph_explore_load_graph.jsh
 jshell> 
 ```
 
