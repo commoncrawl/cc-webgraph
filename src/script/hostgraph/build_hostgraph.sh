@@ -34,10 +34,10 @@ SPARK_HADOOP_OPTS=""
 SPARK_EXTRA_OPTS=""
 
 HOST_LINK_EXTRACTOR=./hostlinks_extract_fastwarc.py
-PYFILES_HOST_LINK_EXTRACTOR="sparkcc.py,sparkcc_fastwarc.py,wat_extract_links.py"
+PYFILES_HOST_LINK_EXTRACTOR="sparkcc.py,sparkcc_fastwarc.py,wat_extract_links.py,json_importer.py"
 
 HOST_LINKS_TO_GRAPH=./hostlinks_to_graph.py
-PYFILES_HOST_LINKS_TO_GRAPH="sparkcc.py,iana_tld.py,wat_extract_links.py"
+PYFILES_HOST_LINKS_TO_GRAPH="sparkcc.py,iana_tld.py,wat_extract_links.py,json_importer.py"
 HOST_LINKS_TO_GRAPH_ARGS=(--validate_host_names) # --normalize_host_names
 
 
