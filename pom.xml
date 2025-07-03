@@ -14,15 +14,15 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>11</java.version>
 
-		<webgraph.version>3.6.10</webgraph.version>
-		<webgraph.big.version>3.7.0</webgraph.big.version>
+		<webgraph.version>3.6.12</webgraph.version>
+		<webgraph.big.version>3.7.1</webgraph.big.version>
 		<law.version>2.7.2</law.version>
-		<fastutil.version>8.5.15</fastutil.version>
-		<crawler.commons.version>1.4</crawler.commons.version>
+		<fastutil.version>8.5.16</fastutil.version>
+		<crawler.commons.version>1.5</crawler.commons.version>
 
-		<slf4j-api.version>2.0.16</slf4j-api.version>
+		<slf4j-api.version>2.0.17</slf4j-api.version>
 
-		<junit.version>5.11.2</junit.version>
+		<junit.version>5.13.2</junit.version>
 	</properties>
 
 	<build>
