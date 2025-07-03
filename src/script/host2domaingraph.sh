@@ -140,4 +140,8 @@ fi
                     <(zcat $_EDGES) \
                     >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >"$OUTPUTDIR"/edges.txt.gz)
 
+echo "Waiting for data to be written to disk..."
 wait # for subshells to finish
+
+echo "Finished aggregation of host-level graph on the domain level:"
+ls -l "$OUTPUTDIR"/{vertices,edges}.txt.gz
