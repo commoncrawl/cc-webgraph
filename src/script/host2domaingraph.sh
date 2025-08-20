@@ -62,7 +62,7 @@ PARALLEL_SORT_THREADS=2
 #     echo -e "com.opus\ncom.opera\nco.mopus\nco.mopera" | shuf | LC_ALL=C sort
 #   This requirement is met by the output of the cc-pyspark job.
 #
-# 2 the second problem stems from the fact that a hyphen (valid in host and
+# 2 The second problem stems from the fact that a hyphen (valid in host and
 #   subdomain names) is sorted before the dot:
 #     ac.gov
 #     ac.gov.ascension
@@ -86,7 +86,37 @@ PARALLEL_SORT_THREADS=2
 #   a trailing dot:
 #     ac.gov.ascension-island
 #     ac.gov.ascension
-
+#
+# 3 The public suffix list adds a further issue: there are multi-part suffixes,
+#   such as "co.uk" (or "uk.co" in reverse domain name notation). And the suffixes
+#   of a multi-part suffix can be public suffixes themselves: also "uk" is a public
+#   suffix. But they do not need to. For example: "no" and "os.hordaland.no" are
+#   in the public suffix list but "hordaland.no" is not. In this situation,
+#   adding a trailing dot does not even guarantee that all hosts of a domain under
+#   a public suffix is in a contiguous block:
+#
+#    $> cat hordaland.txt
+#    no.hordaland
+#    no.hordaland-teater
+#    no.hordaland.os
+#    no.hordaland.os.bibliotek
+#    no.hordaland.oygarden
+#    no.hordalandfolkemusikklag
+#
+#    $> cat hordaland.txt | sed 's/$/./' | LC_ALL=C sort
+#    no.hordaland-teater.
+#    no.hordaland.
+#    no.hordaland.os.
+#    no.hordaland.os.bibliotek.
+#    no.hordaland.oygarden.
+#    no.hordalandfolkemusikklag.
+#
+#   The host names "no.hordaland." and "no.hordaland.oygarden." both
+#   are under the domain ""no.hordaland" (public suffix is "no").
+#
+#   Please see https://github.com/commoncrawl/cc-webgraph/issues/3
+#   for further details.
+#
 
 export LC_ALL=C
 
