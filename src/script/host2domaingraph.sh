@@ -47,12 +47,12 @@ PARALLEL_SORT_THREADS=2
 # - requires properly sorted input:
 #    * reversed host names
 #    * all hosts/subdomains of one domain following in a single input block
-# - approx. memory requirements:
+# - approx. memory requirements (see below JXMX):
 #    * for graphs with less than 2^31 vertices
-#       2 GB +  4*number_of_vertices Bytes
+#       4 GB +  4*number_of_vertices Bytes
 #    * larger graphs
 #       8 GB + 10*number_of_vertices Bytes
-
+#
 # Notes about input sorting:
 #
 # 1 C locale is mandatory to keep reversed hosts of one domain or top-level domain
@@ -125,7 +125,17 @@ fi
 
 mkdir -p "$OUTPUTDIR/"
 
-JXMX=$((2+1+5*SIZE/2**30))
+# Heuristics to set Java heap size:
+# - hold the array mapping host IDs to domain IDs
+#   - 4 bytes per vertex for host graphs with less than 2 billion nodes
+#   - 8 bytes per vertex for larger graphs
+#   - to be on the safe side: calculate with 5 resp. 10 bytes per node
+# - plus memory for buffering domain names until all hosts of one domain
+#   are processed and the domain names can be written to output.
+#   The buffering is required to deal with sorting issue: it's not possible
+#   to sort the list of reversed host names in a way that all hosts of one
+#   domain are in a contiguous block. See the above explanations.
+JXMX=$((4+1+5*SIZE/2**30))
 if [ "$SIZE" -gt $((2**31-1024)) ]; then
     JXMX=$((8+1+10*SIZE/2**30))
 fi
