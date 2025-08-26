@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -186,8 +187,19 @@ public class GraphExplorer {
 	/* Utilities */
 
 	public long[] loadVerticesFromFile(String fileName) {
+		AtomicLong lines = new AtomicLong();
 		try (Stream<String> in = Files.lines(Paths.get(fileName), StandardCharsets.UTF_8)) {
-			return in.mapToLong(label -> g.vertexLabelToId(label)).filter(id -> id > -1).toArray();
+			long[] res = in.mapToLong(
+					label -> {
+						lines.incrementAndGet();
+						long id = g.vertexLabelToId(label);
+						if (id == -1) {
+							LOG.debug("Vertex `{}` not found in graph.", label);
+						}
+						return id;
+					}).filter(id -> id > -1).toArray();
+			LOG.info("Loaded {} vertices of {} lines in {}.", res.length, lines, fileName);
+			return res;
 		} catch (IOException e) {
 			LOG.error("Failed to load vertices from file {}", fileName, e);
 		}
@@ -195,12 +207,7 @@ public class GraphExplorer {
 	}
 
 	public void saveVerticesToFile(long[] vertexIDs, String fileName) {
-		try (PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(fileName)), false,
-				StandardCharsets.UTF_8)) {
-			Arrays.stream(vertexIDs).forEach(id -> out.println(g.vertexIdToLabel(id)));
-		} catch (IOException e) {
-			LOG.error("Failed to write vertices to file {}", fileName, e);
-		}
+		saveVerticesToFile(Arrays.stream(vertexIDs), fileName);
 	}
 
 	public void saveVerticesToFile(int[] vertexIDs, String fileName) {
@@ -208,18 +215,28 @@ public class GraphExplorer {
 	}
 
 	public void saveVerticesToFile(IntStream vertexIDs, String fileName) {
+		AtomicLong count = new AtomicLong();
 		try (PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(fileName)), false,
 				StandardCharsets.UTF_8)) {
-			vertexIDs.forEach(id -> out.println(g.vertexIdToLabel(id)));
+			vertexIDs.forEach(id -> {
+				count.incrementAndGet();
+				out.println(g.vertexIdToLabel(id));
+			});
+			LOG.info("Saved {} vertices to file {}.", count.get(), fileName);
 		} catch (IOException e) {
 			LOG.error("Failed to write vertices to file {}", fileName, e);
 		}
 	}
 
 	public void saveVerticesToFile(LongStream vertexIDs, String fileName) {
+		AtomicLong count = new AtomicLong();
 		try (PrintStream out = new PrintStream(Files.newOutputStream(Paths.get(fileName)), false,
 				StandardCharsets.UTF_8)) {
-			vertexIDs.forEach(id -> out.println(g.vertexIdToLabel(id)));
+			vertexIDs.forEach(id -> {
+				count.incrementAndGet();
+				out.println(g.vertexIdToLabel(id));
+			});
+			LOG.info("Saved {} vertices to file {}.", count.get(), fileName);
 		} catch (IOException e) {
 			LOG.error("Failed to write vertices to file {}", fileName, e);
 		}
