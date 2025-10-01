@@ -125,6 +125,22 @@ public class Graph {
 		}
 	}
 
+	public boolean isArc(long fromId, long toId) {
+		final LazyIntIterator succors = graph.successors((int) fromId);
+		for (int s; (s = succors.nextInt()) != -1;) {
+			if (s == toId) {
+				return true;
+			} else if (s > toId) {
+				break;
+			}
+		}
+		return false;
+	}
+
+	public boolean isArc(String from, String to) {
+		return isArc(vertexLabelToId(from), vertexLabelToId(to));
+	}
+
 	public int outdegree(long vertexId) {
 		return graph.outdegree((int) vertexId);
 	}
@@ -183,6 +199,10 @@ public class Graph {
 
 	public IntStream successorIntStream(ImmutableGraph graph, long vertexId, Interval interval) {
 		return Arrays.stream(graph.successorArray((int) vertexId)).filter(x -> (interval.compareTo(x) == 0));
+	}
+
+	public long[] successorIntersect(long vertexId, long[] vertexIds) {
+		return intersect(vertexIds, successors(vertexId));
 	}
 
 	public Stream<String> successorTopLevelDomainStream(ImmutableGraph graph, long vertexId) {
@@ -288,6 +308,10 @@ public class Graph {
 		return successorIntStream(graphT, vertexLabelToId(vertexLabel), vertexMap.getInterval(prefix));
 	}
 
+	public long[] predecessorIntersect(long vertexId, long[] vertexIds) {
+		return intersect(vertexIds, predecessors(vertexId));
+	}
+
 	public Stream<Entry<String, Long>> predecessorTopLevelDomainCounts(String vertexLabel) {
 		return successorTopLevelDomainCounts(graphT, vertexLabelToId(vertexLabel));
 	}
@@ -357,6 +381,67 @@ public class Graph {
 		return reversedDomainName;
 	}
 
+
+	/** Intersection of two sorted lists */
+	public static long[] intersect(long[] a, long[] b) {
+		int m = a.length;
+		int n = b.length;
+		LongArrayList res = new LongArrayList(Integer.min(m, n));
+		int i = 0, j = 0;
+		while (i < m && j < n) {
+			if (a[i] < b[j]) {
+				i++;
+			} else if (a[i] > b[j]) {
+				j++;
+			} else {
+				res.add(a[i]);
+				i++;
+				j++;
+			}
+		}
+		return res.toArray(new long[0]);
+	}
+
+	/** Intersection of two sorted lists */
+	public static long[] intersect(long[] a, int[] b) {
+		int m = a.length;
+		int n = b.length;
+		LongArrayList res = new LongArrayList(Integer.min(m, n));
+		int i = 0, j = 0;
+		while (i < m && j < n) {
+			if (a[i] < b[j]) {
+				i++;
+			} else if (a[i] > b[j]) {
+				j++;
+			} else {
+				res.add(a[i]);
+				i++;
+				j++;
+			}
+		}
+		return res.toArray(new long[0]);
+	}
+
+	/** Difference of two sorted lists: a \ b */
+	public static long[] difference(long[] a, long[] b) {
+		int m = a.length;
+		int n = b.length;
+		LongArrayList res = new LongArrayList(Integer.max(m, n));
+		int i = 0, j = 0;
+		while (i < m) {
+			if (j >= n || a[i] < b[j]) {
+				res.add(a[i]);
+				i++;
+			} else if (a[i] > b[j]) {
+				j++;
+			} else {
+				i++;
+				j++;
+			}
+		}
+		return res.toArray(new long[0]);
+	}
+
 	/**
 	 * Get the registered domain for a host name based on the ICANN section of the
 	 * <a href="https://www.publicsuffix.org/">public suffix list</a>.
@@ -410,5 +495,32 @@ public class Graph {
 	 */
 	public static String reverseDomainName(String domainName) {
 		return HostToDomainGraph.reverseHost(domainName);
+	}
+
+	public void subgraphMetrics(long[] nodes) {
+		long totalInlinks = 0, totalOutlinks = 0, arcsInCluster = 0, clusterInlinks = 0, clusterOutlinks = 0;
+		for (long i : nodes) {
+			int nInlinks = indegree(i);
+			totalInlinks += nInlinks;
+			int nOutlinks = outdegree(i);
+			totalOutlinks += nOutlinks;
+			int inClusterInlinks = predecessorIntersect(i, nodes).length;
+			arcsInCluster += inClusterInlinks;
+			clusterInlinks += nInlinks - inClusterInlinks;
+			int inClusterOutlinks = successorIntersect(i, nodes).length;
+			// Note: we do only count in-cluster inlinks (but not outlinks)
+			// as in-cluster arcs. Otherwise we would count arcs twice.
+			clusterOutlinks += nOutlinks - inClusterOutlinks;
+		}
+		LOG.info("Subgraph metrics:");
+		LOG.info("\tnodes = {}", nodes.length);
+		LOG.info("\tarcs = {} (counting only arcs connecting subgraph nodes)", arcsInCluster);
+		LOG.info("\tavgdegree = {} (average degree in subgraph)", (double) arcsInCluster / nodes.length);
+		LOG.info("\tinlinks = {} (links from the outer graph into the subgraph)", clusterInlinks);
+		LOG.info("\toutlinks = {} (links from the subgraph to outer nodes)", clusterOutlinks);
+		LOG.info("\ttotal inlinks = {} (all inlinks)", totalInlinks);
+		LOG.info("\ttotal outlinks = {} (all outlinks)", totalOutlinks);
+		LOG.info("\tnodes linked = {} (outer nodes linked from subgraph)", sharedSuccessors(nodes, 1, nodes.length).length);
+		LOG.info("\tnodes linking = {} (outer nodes linking to subgraph)", sharedPredecessors(nodes, 1, nodes.length).length);
 	}
 }
