@@ -255,8 +255,11 @@ public class Graph {
 						}
 						count++;
 					}
-					curr = next;
 					res.add(new SimpleEntry<>(tld, count));
+					curr = next;
+					if (!iter.hasNext()) {
+						break;
+					}
 				} while (curr > -1);
 			}
 			return res.stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
