@@ -18,7 +18,7 @@
 		<webgraph.big.version>3.7.1</webgraph.big.version>
 		<law.version>2.7.2</law.version>
 		<fastutil.version>8.5.16</fastutil.version>
-		<crawler.commons.version>1.5</crawler.commons.version>
+		<crawler.commons.version>1.6</crawler.commons.version>
 
 		<slf4j-api.version>2.0.17</slf4j-api.version>
 
