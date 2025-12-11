@@ -26,16 +26,16 @@ public class TestCountingMergedIntIterator {
 		CountingMergedIntIterator iter = new CountingMergedIntIterator(LazyIntIterators.EMPTY_ITERATOR);
 		assertFalse(iter.hasNext());
 
-		int[][][]  testArrays = { //
-				{{0, 1}}, //
-				{{0}, {1}}, //
-				{{1}, {0}}, //
-				{{1}, {0}, {}}, //
-				{{1}, {0}, {}, {0}, {0}}, //
-				{{1}, {0}, {}, {0}, {0, 1}}, //
+		int[][][] testArrays = { //
+				{ { 0, 1 } }, //
+				{ { 0 }, { 1 } }, //
+				{ { 1 }, { 0 } }, //
+				{ { 1 }, { 0 }, {} }, //
+				{ { 1 }, { 0 }, {}, { 0 }, { 0 } }, //
+				{ { 1 }, { 0 }, {}, { 0 }, { 0, 1 } }, //
 				// tests for input arrays with repeating numbers
-				{{1, 1}, {0, 0}, {}, {0, 0}, {0, 0}}, //
-				{{1, 1}, {0, 0}, {}, {0}, {0, 1}} //
+				{ { 1, 1 }, { 0, 0 }, {}, { 0, 0 }, { 0, 0 } }, //
+				{ { 1, 1 }, { 0, 0 }, {}, { 0 }, { 0, 1 } } //
 		};
 
 		for (int[][] tArrays : testArrays) {
@@ -48,7 +48,7 @@ public class TestCountingMergedIntIterator {
 			int totalCount = 0;
 			iter = new CountingMergedIntIterator(tIters);
 			assertTrue(iter.hasNext());
-			
+
 			assertEquals(0, iter.nextInt());
 			assertTrue(iter.getCount() > 0);
 			totalCount += iter.getCount();

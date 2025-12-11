@@ -384,7 +384,6 @@ public class Graph {
 		return reversedDomainName;
 	}
 
-
 	/** Intersection of two sorted lists */
 	public static long[] intersect(long[] a, long[] b) {
 		int m = a.length;
@@ -523,7 +522,9 @@ public class Graph {
 		LOG.info("\toutlinks = {} (links from the subgraph to outer nodes)", clusterOutlinks);
 		LOG.info("\ttotal inlinks = {} (all inlinks)", totalInlinks);
 		LOG.info("\ttotal outlinks = {} (all outlinks)", totalOutlinks);
-		LOG.info("\tnodes linked = {} (outer nodes linked from subgraph)", sharedSuccessors(nodes, 1, nodes.length).length);
-		LOG.info("\tnodes linking = {} (outer nodes linking to subgraph)", sharedPredecessors(nodes, 1, nodes.length).length);
+		LOG.info("\tnodes linked = {} (outer nodes linked from subgraph)",
+				sharedSuccessors(nodes, 1, nodes.length).length);
+		LOG.info("\tnodes linking = {} (outer nodes linking to subgraph)",
+				sharedPredecessors(nodes, 1, nodes.length).length);
 	}
 }

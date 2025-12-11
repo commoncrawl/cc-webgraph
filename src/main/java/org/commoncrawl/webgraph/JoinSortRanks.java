@@ -97,7 +97,7 @@ public class JoinSortRanks {
 			indirectSortPerm[i] = i;
 		}
 		Arrays.parallelQuickSort(0, length, comp, this::swapIndirect);
-		for (int i = 0; i < length; ) {
+		for (int i = 0; i < length;) {
 			ranks[indirectSortPerm[i]] = ++i;
 		}
 		indirectSortPerm = null;
@@ -139,7 +139,7 @@ public class JoinSortRanks {
 		long id = Long.parseLong(line.substring(0, sep));
 		// check whether new line is already contained
 		int end = line.lastIndexOf('\n');
-		String revHost = line.substring(sep+1);
+		String revHost = line.substring(sep + 1);
 		float hcv = getHarmonicCentralityValue(id);
 		long hcr = getHarmonicCentralityRank(id);
 		double prv = getPageRankValue(id);
@@ -159,7 +159,6 @@ public class JoinSortRanks {
 		}
 		return sb.toString();
 	}
-
 
 	/**
 	 * Implementation of {@link JoinSortRanks} for lists exceeding
@@ -229,7 +228,7 @@ public class JoinSortRanks {
 				BigArrays.set(indirectSortPerm, i, i);
 			}
 			BigArrays.quickSort(0, length, comp, this::swapIndirect);
-			for (long i = 0; i < length; ) {
+			for (long i = 0; i < length;) {
 				BigArrays.set(ranks, BigArrays.get(indirectSortPerm, i), ++i);
 			}
 			indirectSortPerm = null;
