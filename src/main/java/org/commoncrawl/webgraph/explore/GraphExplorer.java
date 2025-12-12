@@ -189,15 +189,14 @@ public class GraphExplorer {
 	public long[] loadVerticesFromFile(String fileName) {
 		AtomicLong lines = new AtomicLong();
 		try (Stream<String> in = Files.lines(Paths.get(fileName), StandardCharsets.UTF_8)) {
-			long[] res = in.mapToLong(
-					label -> {
-						lines.incrementAndGet();
-						long id = g.vertexLabelToId(label);
-						if (id == -1) {
-							LOG.debug("Vertex `{}` not found in graph.", label);
-						}
-						return id;
-					}).filter(id -> id > -1).toArray();
+			long[] res = in.mapToLong(label -> {
+				lines.incrementAndGet();
+				long id = g.vertexLabelToId(label);
+				if (id == -1) {
+					LOG.debug("Vertex `{}` not found in graph.", label);
+				}
+				return id;
+			}).filter(id -> id > -1).toArray();
 			LOG.info("Loaded {} vertices of {} lines in {}.", res.length, lines, fileName);
 			return res;
 		} catch (IOException e) {

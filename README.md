@@ -19,6 +19,11 @@ The assembly jar file includes also the [WebGraph](https://webgraph.di.unimi.it/
 The Javadocs are created by `mvn javadoc:javadoc`. Then open the file `target/site/apidocs/index.html` in a browser.
 
 
+### Source Code Formatting
+
+Run `mvn spotless:check` and `mvn spotless:apply`, see the [Spotless Maven guide](https://github.com/diffplug/spotless/blob/main/plugin-maven/README.md). Java formatting rules are defined in [eclipse-formatter.xml](eclipse-formatter.xml).
+
+
 ## Memory and Disk Requirements
 
 Note that the webgraphs are usually multiple Gigabytes in size and require for processing

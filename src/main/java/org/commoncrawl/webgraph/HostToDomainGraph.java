@@ -337,7 +337,10 @@ public class HostToDomainGraph {
 			return null;
 		}
 		if (lastDomain != null && domain.equals(lastDomain.name)) {
-			// short cut for the common case of many subsequent subdomains of the same domain
+			/*
+			 * short cut for the common case of many subsequent subdomains of the same
+			 * domain
+			 */
 			lastDomain.add(id);
 			return null;
 		}

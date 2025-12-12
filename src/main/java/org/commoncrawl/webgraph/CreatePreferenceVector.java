@@ -35,7 +35,6 @@ public class CreatePreferenceVector {
 	long recordsProcessed;
 	long preferenceNamesFound;
 
-
 	public CreatePreferenceVector(double defVal) {
 		defaultPreferenceValue = defVal;
 	}
