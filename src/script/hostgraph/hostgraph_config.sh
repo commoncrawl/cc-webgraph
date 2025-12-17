@@ -84,69 +84,85 @@ export PYSPARK_PYTHON=python3
 NUM_EXECUTORS=${NUM_EXECUTORS:-16}
 EXECUTOR_CONFIG=${EXECUTOR_CONFIG:-"r5.xlarge"}
 # NOTE:
-#  - step 1 (host link extraction) can be run on smaller instances
-#    or "compute optimized" instance types
-#  - webgraph construction (esp. for merged graphs including multiple monthly crawls)
-#    needs instances with sufficient amount of RAM (32 GB or more)
-#  - assigning IDs in multiple partitions
+# The hardware requirements depend on the size of the webgraph. In addition,
+#  - The first step (host link extraction) can be run on smaller
+#    or "compute optimized" instances. The link extraction is highly
+#    parallizable and has a low memory footprint.
+#  - The second step, the webgraph construction, that is enumeration
+#    of vertices and mapping of host-host links to numerical arcs requires
+#    instances with sufficient amount of RAM (usually, 32 GB or more).
+#    Especially, for merged graphs spanning over multiple monthly crawls.
+#    The configuration assigns a smaller number of cores per executor,
+#    see EXECUTOR_CORES_STEP2.
+#  - Assigning the vertex IDs in multiple partitions
 #    (see hostlinks_to_graph.py --vertex_partitions)
-#    reduces the memory requirements significantly
+#    reduces the memory requirements significantly.
 
 
 case "$EXECUTOR_CONFIG" in
     c[5678]*.xlarge )
         EXECUTOR_CORES=3
+        EXECUTOR_CORES_STEP2=2
         EXECUTOR_MEM=5g
         NODEMANAGER_MEM_MB=$((6*1024))
         ;;
     c[5678]*.2xlarge )
         EXECUTOR_CORES=6
+        EXECUTOR_CORES_STEP2=4
         EXECUTOR_MEM=10g
         NODEMANAGER_MEM_MB=$((11*1024))
         ;;
     c[5678]*.4xlarge )
         EXECUTOR_CORES=12
+        EXECUTOR_CORES_STEP2=8
         EXECUTOR_MEM=22g
         NODEMANAGER_MEM_MB=$((24*1024))
         ;;
     r[5678]*.xlarge )
         EXECUTOR_CORES=4
+        EXECUTOR_CORES_STEP2=3
         EXECUTOR_MEM=23g
         NODEMANAGER_MEM_MB=$((24*1024))
         ;;
     r[5678]*.2xlarge )
         EXECUTOR_CORES=7
+        EXECUTOR_CORES_STEP2=5
         EXECUTOR_MEM=46g
         NODEMANAGER_MEM_MB=$((48*1024))
         ;;
     r[5678]*.4xlarge )
         EXECUTOR_CORES=15
+        EXECUTOR_CORES_STEP2=10
         EXECUTOR_MEM=94g
         NODEMANAGER_MEM_MB=$((96*1024))
         ;;
     r[5678]*.8xlarge )
         EXECUTOR_CORES=30
+        EXECUTOR_CORES_STEP2=20
         EXECUTOR_MEM=190g
         NODEMANAGER_MEM_MB=$((192*1024))
         ;;
     m[5678]*.2xlarge )
         EXECUTOR_CORES=8
+        EXECUTOR_CORES_STEP2=6
         EXECUTOR_MEM=23g
         NODEMANAGER_MEM_MB=$((24*1024))
         ;;
     m[5678]*.4xlarge )
         EXECUTOR_CORES=16
+        EXECUTOR_CORES_STEP2=12
         EXECUTOR_MEM=46g
         NODEMANAGER_MEM_MB=$((48*1024))
         ;;
     m[5678]*.8xlarge )
         EXECUTOR_CORES=32
+        EXECUTOR_CORES_STEP2=24
         EXECUTOR_MEM=94g
         NODEMANAGER_MEM_MB=$((98*1024))
         ;;
     "custom" )
         if [ -z "$EXECUTOR_CORES" ] || [ -z "$EXECUTOR_MEM" ]; then
-            echo "No valid custom executor configuration: must specify EXECUTOR_CORES and EXECUTOR_MEM'" >&2
+            echo "No valid custom executor configuration: must specify EXECUTOR_CORES and EXECUTOR_MEM, eventually also EXECUTOR_CORES_STEP2'" >&2
             exit 1
         fi
         ;;
@@ -155,11 +171,16 @@ case "$EXECUTOR_CONFIG" in
         exit 1
 esac
 
+if [ -z "$EXECUTOR_CORES_STEP2" ]; then
+    # fall-back definition of EXECUTOR_CORES_STEP2 : ceil( $EXECUTOR_CORES * 2/3 )
+    EXECUTOR_CORES_STEP2=$(((2*EXECUTOR_CORES+2)/3))
+fi
+
 SPARK_EXTRA_OPTS="$SPARK_EXTRA_OPTS --conf spark.yarn.nodemanager.resource.memory-mb=$NODEMANAGER_MEM_MB"
 
 OUTPUT_PARTITIONS=$((NUM_EXECUTORS*EXECUTOR_CORES/2))
-WEBGRAPH_EDGE_PARTITIONS=$((NUM_EXECUTORS*EXECUTOR_CORES/2))
+WEBGRAPH_EDGE_PARTITIONS=$((NUM_EXECUTORS*EXECUTOR_CORES_STEP2))
 WEBGRAPH_EDGE_PARTITIONS=$(((WEBGRAPH_EDGE_PARTITIONS<NUM_EXECUTORS)?NUM_EXECUTORS:WEBGRAPH_EDGE_PARTITIONS))
-WEBGRAPH_VERTEX_PARTITIONS=$((NUM_EXECUTORS*EXECUTOR_CORES/4))
+WEBGRAPH_VERTEX_PARTITIONS=$((NUM_EXECUTORS*EXECUTOR_CORES_STEP2/4))
 WEBGRAPH_VERTEX_PARTITIONS=$(((WEBGRAPH_VERTEX_PARTITIONS<NUM_EXECUTORS)?NUM_EXECUTORS:WEBGRAPH_VERTEX_PARTITIONS))
 DIVISOR_INPUT_PARTITIONS=5

@@ -365,7 +365,7 @@ if [ -n "MERGE_NAME" ]; then
         --conf spark.io.compression.codec=zstd \
         --conf spark.checkpoint.compress=true \
         --num-executors $NUM_EXECUTORS \
-        --executor-cores $EXECUTOR_CORES \
+        --executor-cores $EXECUTOR_CORES_STEP2 \
         --executor-memory $EXECUTOR_MEM \
         --conf spark.sql.warehouse.dir=$WAREHOUSE_DIR \
         --conf spark.sql.parquet.compression.codec=zstd \
