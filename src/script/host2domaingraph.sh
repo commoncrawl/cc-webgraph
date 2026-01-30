@@ -123,6 +123,11 @@ export LC_ALL=C
 # sort with large buffers, merge sort over many files if possible
 SORTOPTS="--batch-size 128 --buffer-size $((1+MAIN_MEM_GB/5))g --parallel=$PARALLEL_SORT_THREADS --temporary-directory $TMPDIR" # --compress-program=gzip
 
+BIN=$(dirname $0)
+source $BIN/workflow_lib.sh
+
+LOG__ "Starting aggregation of host-level graph on the domain level"
+
 set -exo pipefail
 
 test -d "$TMPDIR" || mkdir "$TMPDIR"
@@ -180,8 +185,8 @@ fi
                     <(zcat $_EDGES) \
                     >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >"$OUTPUTDIR"/edges.txt.gz)
 
-echo "Waiting for data to be written to disk..."
+LOG__ "Waiting for data to be written to disk..."
 wait # for subshells to finish
 
-echo "Finished aggregation of host-level graph on the domain level:"
+LOG__ "Finished aggregation of host-level graph on the domain level:"
 ls -l "$OUTPUTDIR"/{vertices,edges}.txt.gz
