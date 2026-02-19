@@ -304,8 +304,11 @@ public class GraphExplorer {
 	 */
 	public static Stream<Entry<String, Long>> frequencies(Stream<String> strings) {
 		final Comparator<Entry<String, Long>> comp = Comparator.comparingLong((Entry<String, Long> e) -> e.getValue())
-				.reversed().thenComparing(Comparator.comparing((Entry<String, Long> e) -> e.getKey()));
-		return strings.collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).entrySet().stream()
+				.reversed()
+				.thenComparing(Comparator.comparing((Entry<String, Long> e) -> e.getKey()));
+		return strings.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+				.entrySet()
+				.stream()
 				.sorted(comp);
 	}
 }

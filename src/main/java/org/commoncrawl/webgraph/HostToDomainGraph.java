@@ -88,8 +88,12 @@ public class HostToDomainGraph {
 		if ((numInputLinesNodes % 500000) != 0 || numInputLinesNodes == 0) {
 			return;
 		}
-		LOG.info("Processed {} node input lines, mapped to {} domains, domain queue usage: {} (max. {})",
-				numInputLinesNodes, (currentId + 1), domainQueue.size(), maxQueueUsed);
+		LOG.info(
+				"Processed {} node input lines, mapped to {} domains, domain queue usage: {} (max. {})",
+				numInputLinesNodes,
+				(currentId + 1),
+				domainQueue.size(),
+				maxQueueUsed);
 	};
 
 	private Consumer<? super String> reporterInputEdges = (String line) -> {
@@ -441,7 +445,10 @@ public class HostToDomainGraph {
 		in.map(func).filter(Objects::nonNull).forEach(out::println);
 	}
 
-	public void convert(Function<String, String> func, Stream<String> in, PrintStream out,
+	public void convert(
+			Function<String, String> func,
+			Stream<String> in,
+			PrintStream out,
 			Consumer<? super String> reporter) {
 		convert(func, in.peek(reporter), out);
 	}

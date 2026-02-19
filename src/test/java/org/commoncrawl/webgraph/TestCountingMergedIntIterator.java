@@ -57,7 +57,9 @@ public class TestCountingMergedIntIterator {
 			assertTrue(iter.getCount() > 0);
 			totalCount += iter.getCount();
 			assertFalse(iter.hasNext());
-			assertEquals(totalCountExpected, totalCount,
+			assertEquals(
+					totalCountExpected,
+					totalCount,
 					"expected total count for input " + Arrays.deepToString(tArrays) + " is " + totalCountExpected);
 		}
 

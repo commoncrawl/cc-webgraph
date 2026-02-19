@@ -230,7 +230,8 @@ class TestHostToDomainGraph {
 		testSorted(hostGraphHyphenatedDomainsSubDomainOnly);
 		testSorted(domainGraphHyphenatedDomains);
 		converter.doCount(true);
-		assertArrayEquals(domainGraphHyphenatedDomainsSubDomainOnly,
+		assertArrayEquals(
+				domainGraphHyphenatedDomainsSubDomainOnly,
 				convert(converter, hostGraphHyphenatedDomainsSubDomainOnly));
 	}
 
@@ -250,7 +251,8 @@ class TestHostToDomainGraph {
 		testSorted(domainGraphHyphenatedDomainsInclMultiPartSuffixes);
 		converter.doCount(true);
 		converter.multiPartSuffixesAsDomains(true);
-		assertArrayEquals(domainGraphHyphenatedDomainsInclMultiPartSuffixes,
+		assertArrayEquals(
+				domainGraphHyphenatedDomainsInclMultiPartSuffixes,
 				convert(converter, hostGraphHyphenatedDomains));
 	}
 

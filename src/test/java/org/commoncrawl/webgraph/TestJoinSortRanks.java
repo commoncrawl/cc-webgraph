@@ -41,8 +41,11 @@ public class TestJoinSortRanks {
 		try {
 			LOG.info("Storing double array of length {} in file {}", arrSize, file.getAbsolutePath());
 			BinIO.storeDoubles(arr, file);
-			LOG.info("Successfully stored double array of length {} in file {}, resulting file size: {} bytes", arrSize,
-					file.getAbsolutePath(), file.length());
+			LOG.info(
+					"Successfully stored double array of length {} in file {}, resulting file size: {} bytes",
+					arrSize,
+					file.getAbsolutePath(),
+					file.length());
 			assertEquals(intOverflow, file.length());
 			LOG.info("Trying to clean up Java heap space...");
 			arr = null;
