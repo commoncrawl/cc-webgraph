@@ -606,11 +606,24 @@ public class HostToDomainGraph {
 			LOG.error("Invalid number: " + args[argpos + 0]);
 			System.exit(1);
 		}
-		if (aggregationLevel != null && privateDomains) {
-			LOG.error(
-					"You cannot specify both --private or --private-domains, and --aggregation-level. "
-							+ "Prefer --aggregation-level [level] because it will super-seed the other command.");
-			System.exit(1);
+		if (aggregationLevel != null) {
+			if (privateDomains) {
+				LOG.error(
+						"You cannot specify both --private or --private-domains, and --aggregation-level. "
+								+ "Prefer --aggregation-level [level] because it will super-seed the other command.");
+				System.exit(1);
+			} else {
+				switch (aggregationLevel) {
+				case AGGREGATION_REGISTERED_DOMAIN:
+					break;
+				case AGGREGATION_PRIVATE_DOMAIN:
+					privateDomains = true;
+					break;
+				case AGGREGATION_HOST_WITHOUT_WWW:
+					stripWww = true;
+					break;
+				}
+			}
 		}
 
 		HostToDomainGraph converter;
@@ -618,17 +631,6 @@ public class HostToDomainGraph {
 			converter = new HostToDomainGraph((int) maxSize);
 		} else {
 			converter = new HostToDomainGraphBig(maxSize);
-		}
-
-		switch (aggregationLevel) {
-		case AGGREGATION_REGISTERED_DOMAIN:
-			break;
-		case AGGREGATION_PRIVATE_DOMAIN:
-			privateDomains = true;
-			break;
-		case AGGREGATION_HOST_WITHOUT_WWW:
-			stripWww = true;
-			break;
 		}
 
 		converter.doCount(countHosts);
