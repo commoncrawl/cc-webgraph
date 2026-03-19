@@ -91,6 +91,9 @@ public class HostToDomainGraph {
 	public final static String AGGREGATION_PRIVATE_DOMAIN = "private-domain";
 	public final static String AGGREGATION_REGISTERED_DOMAIN = "domain";
 
+	private final static List<String> ALLOWED_AGGREGATION_PARAMS = java.util.Arrays
+			.asList(AGGREGATION_REGISTERED_DOMAIN, AGGREGATION_PRIVATE_DOMAIN, AGGREGATION_HOST_WITHOUT_WWW);
+
 	private Consumer<? super String> reporterInputNodes = (String line) -> {
 		if ((numInputLinesNodes % 500000) != 0 || numInputLinesNodes == 0) {
 			return;
@@ -545,7 +548,7 @@ public class HostToDomainGraph {
 		boolean countHosts = false;
 		boolean includeMultiPartSuffixes = false;
 		boolean privateDomains = false;
-		String aggregationLevel = AGGREGATION_REGISTERED_DOMAIN;
+		String aggregationLevel = null;
 		boolean stripWww = false;
 		int argpos = 0;
 		while (argpos < args.length && args[argpos].startsWith("-")) {
@@ -563,7 +566,9 @@ public class HostToDomainGraph {
 				includeMultiPartSuffixes = true;
 				break;
 			case "--private-domains":
-			case "--private": // back-ward compatibility
+			case "--private": // back-ward compatibility (but deprecated in favour of --aggregation-level)
+				LOG.warn(
+						"The parameter --private / --private-domains is deprecated, in favour of --aggregation-level with value private-domain");
 				privateDomains = true;
 				break;
 			case "--aggregation-level":
@@ -574,9 +579,7 @@ public class HostToDomainGraph {
 				}
 				String value = args[argpos + 1];
 
-				if (!java.util.Arrays
-						.asList(AGGREGATION_REGISTERED_DOMAIN, AGGREGATION_PRIVATE_DOMAIN, AGGREGATION_HOST_WITHOUT_WWW)
-						.contains(value)) {
+				if (!ALLOWED_AGGREGATION_PARAMS.contains(value)) {
 					LOG.error("Unknown value for option " + args[argpos] + ": " + value);
 					showHelp();
 					System.exit(1);
@@ -603,6 +606,13 @@ public class HostToDomainGraph {
 			LOG.error("Invalid number: " + args[argpos + 0]);
 			System.exit(1);
 		}
+		if (aggregationLevel != null && privateDomains) {
+			LOG.error(
+					"You cannot specify both --private or --private-domains, and --aggregation-level. "
+							+ "Prefer --aggregation-level [level] because it will super-seed the other command.");
+			System.exit(1);
+		}
+
 		HostToDomainGraph converter;
 		if (maxSize <= Arrays.MAX_ARRAY_SIZE) {
 			converter = new HostToDomainGraph((int) maxSize);

@@ -159,8 +159,6 @@ class TestHostToDomainGraph {
 			"4\tname.hit\t1", //
 	};
 
-
-
 	@BeforeEach
 	void init() {
 		converter = new HostToDomainGraph(maxGraphNodes);
