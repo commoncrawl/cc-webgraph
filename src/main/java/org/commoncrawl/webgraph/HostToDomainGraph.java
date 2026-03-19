@@ -18,7 +18,6 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +88,7 @@ public class HostToDomainGraph {
 
 	public final static String AGGREGATION_HOST_WITHOUT_WWW = "host-without-www";
 	public final static String AGGREGATION_PRIVATE_DOMAIN = "private-domain";
-	public final static String AGGREGATION_REGISTERED_DOMAIN = "domain";
+	public final static String AGGREGATION_REGISTERED_DOMAIN = "registered-domain";
 
 	private final static List<String> ALLOWED_AGGREGATION_PARAMS = java.util.Arrays
 			.asList(AGGREGATION_REGISTERED_DOMAIN, AGGREGATION_PRIVATE_DOMAIN, AGGREGATION_HOST_WITHOUT_WWW);
@@ -530,12 +529,13 @@ public class HostToDomainGraph {
 		System.err.println(" --aggregation-level\tdefine the strategy on which hosts are folded to domains.");
 		System.err.println("                  	\tPossible values: registered-domain (default), private-domain, ");
 		System.err.println("                  	\thost-without-www. ");
-		System.err.println(" 				  	\t- registered-domains: convert only the registered domains ");
+		System.err.println(" 				  	\t- registered-domain: convert only the registered domains ");
 		System.err.println(" 				  	\t- private-domains: convert to private domains ");
 		System.err.println("                  	\t(include suffixes from the PRIVATE domains subdivision of the ");
 		System.err.println("                  	\tpublic suffix list, ");
 		System.err.println("                  	\tsee https://github.com/publicsuffix/list/wiki/Format#divisions)");
-		System.err.println(" 				  	\t- host-without-www: strip the www. from the hostname");
+		System.err.println(
+				" 				  	\t- host-without-www: strip the www. prefix before extracting the registered domain");
 		System.err.println(" --multipart-suffixes-as-domains\toutput host names which are equal to multi-part");
 		System.err.println("                                \tpublic suffixes (the suffix contains a dot) as domain");
 		System.err.println("                                \tnames, eg. `gov.uk', `freight.aero' or `altoadige.it'.");
@@ -608,7 +608,7 @@ public class HostToDomainGraph {
 			if (privateDomains) {
 				LOG.error(
 						"You cannot specify both --private or --private-domains, and --aggregation-level. "
-								+ "Prefer --aggregation-level [level] because it will super-seed the other command.");
+								+ "Prefer --aggregation-level [level] because it will supersede the other option.");
 				System.exit(1);
 			} else {
 				switch (aggregationLevel) {
