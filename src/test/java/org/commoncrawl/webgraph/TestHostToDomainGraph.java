@@ -139,6 +139,28 @@ class TestHostToDomainGraph {
 			"8\tname.hit\t1", //
 	};
 
+	String[] hostGraphWithWwwDomains = { //
+			"0\tname.hiro.www", //
+			"1\tname.hiropo", //
+			"2\tname.his.forgot.adam.www", //
+			"3\tname.his.forgot.ben.www", //
+			"4\tname.his.forgot.never", //
+			"5\tname.his.prz.www", //
+			"6\tname.his.www", //
+			"7\tname.history", //
+			"8\tname.history.0.aba", //
+			"9\tname.hit.www", //
+	};
+	String[] domainGraphWithWwwDomains = { //
+			"0\tname.hiro\t1", //
+			"1\tname.hiropo\t1", //
+			"2\tname.his\t5", //
+			"3\tname.history\t2", //
+			"4\tname.hit\t1", //
+	};
+
+
+
 	@BeforeEach
 	void init() {
 		converter = new HostToDomainGraph(maxGraphNodes);
@@ -265,6 +287,18 @@ class TestHostToDomainGraph {
 		converter.doPrivateDomains(true);
 		converter.multiPartSuffixesAsDomains(true);
 		assertArrayEquals(domainGraphPrivateDomains, convert(converter, hostGraphPrivateDomains));
+	}
+
+	@Test
+	void testConvertStripWww() {
+		// verify sorting of input and expected output
+		testSorted(hostGraphWithWwwDomains);
+		testSorted(domainGraphWithWwwDomains);
+		converter.doCount(true);
+		converter.setStripWww(true);
+		converter.multiPartSuffixesAsDomains(true);
+		String[] convert = convert(converter, hostGraphWithWwwDomains);
+		assertArrayEquals(domainGraphWithWwwDomains, convert);
 	}
 
 }
