@@ -345,9 +345,7 @@ public class HostToDomainGraph {
 		lastRevHost = revHost;
 		String host = reverseHost(revHost);
 		if (this.stripWww) {
-			String[] parts = host.split("\\.");
-
-			if (parts.length > 2 && parts[0].equals("www")) {
+			if (host.startsWith("www.") && host.indexOf('.', 4) != -1) {
 				// strip leading 'www' to reduce number of "duplicate" hosts,
 				// but leave at least 2 trailing parts (www.com is a valid domain)
 				host = host.substring(4);
