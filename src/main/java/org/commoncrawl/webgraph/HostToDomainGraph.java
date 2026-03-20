@@ -541,8 +541,8 @@ public class HostToDomainGraph {
 		System.err.println(
 				"                  	        \tsee https://github.com/publicsuffix/list/wiki/Format#divisions)");
 		System.err
-				.println("                            \t- host-without-www: strip the www. prefix before extracting ");
-		System.err.println("                            \tthe registered domain");
+				.println("                            \t- host-without-www: strip the www. prefix (keep the ");
+		System.err.println("                            \tfull host otherwise)");
 		System.err.println(" --multipart-suffixes-as-domains\toutput host names which are equal to multi-part");
 		System.err.println("                                \tpublic suffixes (the suffix contains a dot) as domain");
 		System.err.println("                                \tnames, eg. `gov.uk', `freight.aero' or `altoadige.it'.");
