@@ -343,20 +343,23 @@ public class HostToDomainGraph {
 		}
 		lastRevHost = revHost;
 		String host = reverseHost(revHost);
+		String domain = null;
+		StringBuilder sb = new StringBuilder();
 		if (this.stripWww) {
 			if (host.startsWith("www.") && host.indexOf('.', 4) != -1) {
 				// strip leading 'www' to reduce number of "duplicate" hosts,
 				// but leave at least 2 trailing parts (www.com is a valid domain)
 				host = host.substring(4);
 			}
-		}
-		String domain = EffectiveTldFinder.getAssignedDomain(host, true, !privateDomains);
-		StringBuilder sb = new StringBuilder();
-		if (domain == null && includeMultiPartSuffixes) {
-			if (EffectiveTldFinder.getEffectiveTLDs().containsKey(host) && host.indexOf('.') != -1) {
-				LOG.info("Accepting public suffix (containing dot) as domain: {}", host);
-			}
 			domain = host;
+		} else {
+			domain = EffectiveTldFinder.getAssignedDomain(host, true, !privateDomains);
+			if (domain == null && includeMultiPartSuffixes) {
+				if (EffectiveTldFinder.getEffectiveTLDs().containsKey(host) && host.indexOf('.') != -1) {
+					LOG.info("Accepting public suffix (containing dot) as domain: {}", host);
+				}
+				domain = host;
+			}
 		}
 		if (domain == null) {
 			LOG.warn("No domain for host: {}", host);

@@ -140,23 +140,23 @@ class TestHostToDomainGraph {
 	};
 
 	String[] hostGraphWithWwwDomains = { //
-			"0\tname.hiro.www", //
-			"1\tname.hiropo", //
-			"2\tname.his.forgot.adam.www", //
+			"0\tname.hiro", //
+			"1\tname.hiro.adam", //
+			"2\tname.hiro.www", //
 			"3\tname.his.forgot.ben.www", //
 			"4\tname.his.forgot.never", //
 			"5\tname.his.prz.www", //
 			"6\tname.his.www", //
-			"7\tname.history", //
-			"8\tname.history.0.aba", //
-			"9\tname.hit.www", //
+			"7\tname.hit.www", //
 	};
 	String[] domainGraphWithWwwDomains = { //
-			"0\tname.hiro\t1", //
-			"1\tname.hiropo\t1", //
-			"2\tname.his\t5", //
-			"3\tname.history\t2", //
-			"4\tname.hit\t1", //
+			"0\tname.hiro\t2", //
+			"1\tname.hiro.adam\t1", //
+			"2\tname.his\t1", //
+			"3\tname.his.forgot.ben\t1", //
+			"4\tname.his.forgot.never\t1", //
+			"5\tname.his.prz\t1", //
+			"6\tname.hit\t1", //
 	};
 
 	@BeforeEach
