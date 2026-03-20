@@ -526,19 +526,23 @@ public class HostToDomainGraph {
 		System.err.println(" -h\t(also -? or --help) show usage message and exit");
 		System.err.println(" -c\tcount hosts per domain (additional column in <nodes_out>");
 		System.err.println(" --private-domains\t(deprecated - use --aggregation-level)");
-		System.err.println(" \tconvert to private domains (include suffixes from the");
+		System.err.println("                  \tconvert to private domains (include suffixes from the");
 		System.err.println("                  \tPRIVATE domains subdivision of the public suffix list,");
 		System.err.println("                  \tsee https://github.com/publicsuffix/list/wiki/Format#divisions)");
 		System.err.println(" --aggregation-level <level>\tdefine the strategy on which hosts are folded to domains.");
-		System.err.println("                  \t<level> values: registered-domain (default), private-domain, ");
-		System.err.println("                    \thost-without-www. ");
-		System.err.println("                    \t- registered-domain: convert only the registered domains ");
-		System.err.println("                    \t- private-domain: convert to private domains ");
-		System.err.println("                  	\t(include suffixes from the PRIVATE domains subdivision of the ");
-		System.err.println("                  	\tpublic suffix list, ");
-		System.err.println("                  	\tsee https://github.com/publicsuffix/list/wiki/Format#divisions)");
+		System.err
+				.println("                            \t<level> values: registered-domain (default), private-domain, ");
+		System.err.println("                            \thost-without-www. ");
+		System.err.println("                            \t- registered-domain: convert only the registered domains ");
+		System.err.println("                            \t- private-domain: convert to private domains ");
 		System.err.println(
-				"                    \t- host-without-www: strip the www. prefix before extracting the registered domain");
+				"                  	        \t(include suffixes from the PRIVATE domains subdivision of the ");
+		System.err.println("                  	        \tpublic suffix list, ");
+		System.err.println(
+				"                  	        \tsee https://github.com/publicsuffix/list/wiki/Format#divisions)");
+		System.err
+				.println("                            \t- host-without-www: strip the www. prefix before extracting ");
+		System.err.println("                            \tthe registered domain");
 		System.err.println(" --multipart-suffixes-as-domains\toutput host names which are equal to multi-part");
 		System.err.println("                                \tpublic suffixes (the suffix contains a dot) as domain");
 		System.err.println("                                \tnames, eg. `gov.uk', `freight.aero' or `altoadige.it'.");
