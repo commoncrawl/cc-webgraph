@@ -11,6 +11,13 @@ while true; do
             PROPERTIES=("${PROPERTIES[@]}" "$1")
             shift
             ;;
+        "--aggregation-level" )
+            FLAGS=("${FLAGS[@]}" "$1")
+            shift
+            # takes one argument
+            FLAGS=("${FLAGS[@]}" "$1")
+            shift
+            ;;
         "-"* )
             FLAGS=("${FLAGS[@]}" "$1")
             shift

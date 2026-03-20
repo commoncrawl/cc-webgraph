@@ -68,6 +68,8 @@ public class HostToDomainGraph {
 
 	protected boolean countHosts = false;
 	protected boolean privateDomains = false;
+
+	protected boolean stripWww = false;
 	protected boolean includeMultiPartSuffixes = false;
 
 	protected long maxSize;
@@ -83,6 +85,13 @@ public class HostToDomainGraph {
 	private int maxQueueUsed = 0;
 
 	private static Pattern SPLIT_HOST_PATTERN = Pattern.compile("\\.");
+
+	public final static String AGGREGATION_HOST_WITHOUT_WWW = "host-without-www";
+	public final static String AGGREGATION_PRIVATE_DOMAIN = "private-domain";
+	public final static String AGGREGATION_REGISTERED_DOMAIN = "registered-domain";
+
+	private final static List<String> ALLOWED_AGGREGATION_PARAMS = java.util.Arrays
+			.asList(AGGREGATION_REGISTERED_DOMAIN, AGGREGATION_PRIVATE_DOMAIN, AGGREGATION_HOST_WITHOUT_WWW);
 
 	private Consumer<? super String> reporterInputNodes = (String line) -> {
 		if ((numInputLinesNodes % 500000) != 0 || numInputLinesNodes == 0) {
@@ -282,6 +291,13 @@ public class HostToDomainGraph {
 	}
 
 	/**
+	 * @param stripWww if true the www. prefix is stripped
+	 */
+	public void setStripWww(boolean stripWww) {
+		this.stripWww = stripWww;
+	}
+
+	/**
 	 * Reverse host name, eg. <code>www.example.com</code> is reversed to
 	 * <code>com.example.www</code>. Can also be used to "unreverse" a reversed host
 	 * name.
@@ -327,13 +343,23 @@ public class HostToDomainGraph {
 		}
 		lastRevHost = revHost;
 		String host = reverseHost(revHost);
-		String domain = EffectiveTldFinder.getAssignedDomain(host, true, !privateDomains);
+		String domain = null;
 		StringBuilder sb = new StringBuilder();
-		if (domain == null && includeMultiPartSuffixes) {
-			if (EffectiveTldFinder.getEffectiveTLDs().containsKey(host) && host.indexOf('.') != -1) {
-				LOG.info("Accepting public suffix (containing dot) as domain: {}", host);
+		if (this.stripWww) {
+			if (host.startsWith("www.") && host.indexOf('.', 4) != -1) {
+				// strip leading 'www' to reduce number of "duplicate" hosts,
+				// but leave at least 2 trailing parts (www.com is a valid domain)
+				host = host.substring(4);
 			}
 			domain = host;
+		} else {
+			domain = EffectiveTldFinder.getAssignedDomain(host, true, !privateDomains);
+			if (domain == null && includeMultiPartSuffixes) {
+				if (EffectiveTldFinder.getEffectiveTLDs().containsKey(host) && host.indexOf('.') != -1) {
+					LOG.info("Accepting public suffix (containing dot) as domain: {}", host);
+				}
+				domain = host;
+			}
 		}
 		if (domain == null) {
 			LOG.warn("No domain for host: {}", host);
@@ -499,9 +525,24 @@ public class HostToDomainGraph {
 		System.err.println("Options:");
 		System.err.println(" -h\t(also -? or --help) show usage message and exit");
 		System.err.println(" -c\tcount hosts per domain (additional column in <nodes_out>");
-		System.err.println(" --private-domains\tconvert to private domains (include suffixes from the");
+		System.err.println(" --private-domains\t(deprecated - use --aggregation-level)");
+		System.err.println("                  \tconvert to private domains (include suffixes from the");
 		System.err.println("                  \tPRIVATE domains subdivision of the public suffix list,");
-		System.err.println("                  \tsee https://github.com/publicsuffix/list/wiki/Format#divisions");
+		System.err.println("                  \tsee https://github.com/publicsuffix/list/wiki/Format#divisions)");
+		System.err.println(" --aggregation-level <level>\tdefine the strategy on which hosts are folded to domains.");
+		System.err
+				.println("                            \t<level> values: registered-domain (default), private-domain, ");
+		System.err.println("                            \thost-without-www. ");
+		System.err.println("                            \t- registered-domain: convert only the registered domains ");
+		System.err.println("                            \t- private-domain: convert to private domains ");
+		System.err.println(
+				"                  	        \t(include suffixes from the PRIVATE domains subdivision of the ");
+		System.err.println("                  	        \tpublic suffix list, ");
+		System.err.println(
+				"                  	        \tsee https://github.com/publicsuffix/list/wiki/Format#divisions)");
+		System.err
+				.println("                            \t- host-without-www: strip the www. prefix (keep the ");
+		System.err.println("                            \tfull host otherwise)");
 		System.err.println(" --multipart-suffixes-as-domains\toutput host names which are equal to multi-part");
 		System.err.println("                                \tpublic suffixes (the suffix contains a dot) as domain");
 		System.err.println("                                \tnames, eg. `gov.uk', `freight.aero' or `altoadige.it'.");
@@ -512,6 +553,8 @@ public class HostToDomainGraph {
 		boolean countHosts = false;
 		boolean includeMultiPartSuffixes = false;
 		boolean privateDomains = false;
+		String aggregationLevel = null;
+		boolean stripWww = false;
 		int argpos = 0;
 		while (argpos < args.length && args[argpos].startsWith("-")) {
 			switch (args[argpos]) {
@@ -528,8 +571,27 @@ public class HostToDomainGraph {
 				includeMultiPartSuffixes = true;
 				break;
 			case "--private-domains":
-			case "--private": // back-ward compatibility
+			case "--private": // back-ward compatibility (but deprecated in favour of --aggregation-level)
+				LOG.warn(
+						"The parameter --private / --private-domains is deprecated, in favour of --aggregation-level with value private-domain");
 				privateDomains = true;
+				break;
+			case "--aggregation-level":
+				if ((argpos + 1) >= args.length) {
+					LOG.error("Missing value for option " + args[argpos]);
+					showHelp();
+					System.exit(1);
+				}
+				String value = args[argpos + 1];
+
+				if (!ALLOWED_AGGREGATION_PARAMS.contains(value)) {
+					LOG.error("Unknown value for option " + args[argpos] + ": " + value);
+					showHelp();
+					System.exit(1);
+				} else {
+					aggregationLevel = value;
+				}
+				argpos++;
 				break;
 			default:
 				System.err.println("Unknown option " + args[argpos]);
@@ -549,15 +611,37 @@ public class HostToDomainGraph {
 			LOG.error("Invalid number: " + args[argpos + 0]);
 			System.exit(1);
 		}
+		if (aggregationLevel != null) {
+			if (privateDomains) {
+				LOG.error(
+						"You cannot specify both --private or --private-domains, and --aggregation-level. "
+								+ "Prefer --aggregation-level [level] because it will supersede the other option.");
+				System.exit(1);
+			} else {
+				switch (aggregationLevel) {
+				case AGGREGATION_REGISTERED_DOMAIN:
+					break;
+				case AGGREGATION_PRIVATE_DOMAIN:
+					privateDomains = true;
+					break;
+				case AGGREGATION_HOST_WITHOUT_WWW:
+					stripWww = true;
+					break;
+				}
+			}
+		}
+
 		HostToDomainGraph converter;
 		if (maxSize <= Arrays.MAX_ARRAY_SIZE) {
 			converter = new HostToDomainGraph((int) maxSize);
 		} else {
 			converter = new HostToDomainGraphBig(maxSize);
 		}
+
 		converter.doCount(countHosts);
 		converter.multiPartSuffixesAsDomains(includeMultiPartSuffixes);
 		converter.doPrivateDomains(privateDomains);
+		converter.setStripWww(stripWww);
 		converter.reportConfig();
 		String nodesIn = args[argpos + 1];
 		String nodesOut = args[argpos + 2];

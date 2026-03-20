@@ -139,6 +139,26 @@ class TestHostToDomainGraph {
 			"8\tname.hit\t1", //
 	};
 
+	String[] hostGraphWithWwwDomains = { //
+			"0\tname.hiro", //
+			"1\tname.hiro.adam", //
+			"2\tname.hiro.www", //
+			"3\tname.his.forgot.ben.www", //
+			"4\tname.his.forgot.never", //
+			"5\tname.his.prz.www", //
+			"6\tname.his.www", //
+			"7\tname.hit.www", //
+	};
+	String[] domainGraphWithWwwDomains = { //
+			"0\tname.hiro\t2", //
+			"1\tname.hiro.adam\t1", //
+			"2\tname.his\t1", //
+			"3\tname.his.forgot.ben\t1", //
+			"4\tname.his.forgot.never\t1", //
+			"5\tname.his.prz\t1", //
+			"6\tname.hit\t1", //
+	};
+
 	@BeforeEach
 	void init() {
 		converter = new HostToDomainGraph(maxGraphNodes);
@@ -265,6 +285,35 @@ class TestHostToDomainGraph {
 		converter.doPrivateDomains(true);
 		converter.multiPartSuffixesAsDomains(true);
 		assertArrayEquals(domainGraphPrivateDomains, convert(converter, hostGraphPrivateDomains));
+	}
+
+	@Test
+	void testConvertStripWww() {
+		// verify sorting of input and expected output
+		testSorted(hostGraphWithWwwDomains);
+		testSorted(domainGraphWithWwwDomains);
+		converter.doCount(true);
+		converter.setStripWww(true);
+		converter.multiPartSuffixesAsDomains(true);
+		String[] convert = convert(converter, hostGraphWithWwwDomains);
+		assertArrayEquals(domainGraphWithWwwDomains, convert);
+	}
+
+	/**
+	 * Test that www.com is not stripped (only one trailing part after www.)
+	 */
+	@Test
+	void testConvertStripWwwEdgeCaseWwwDotCom() {
+		String[] hostGraph = { //
+				"0\tcom.www", //
+		};
+		String[] expectedDomainGraph = { //
+				"0\tcom.www\t1", //
+		};
+		converter.doCount(true);
+		converter.setStripWww(true);
+		String[] convert = convert(converter, hostGraph);
+		assertArrayEquals(expectedDomainGraph, convert);
 	}
 
 }
