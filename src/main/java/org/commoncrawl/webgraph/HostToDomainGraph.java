@@ -537,7 +537,8 @@ public class HostToDomainGraph {
 		System.err.println("                  	\t(include suffixes from the PRIVATE domains subdivision of the ");
 		System.err.println("                  	\tpublic suffix list, ");
 		System.err.println("                  	\tsee https://github.com/publicsuffix/list/wiki/Format#divisions)");
-		System.err.println("                    \t- host-without-www: strip the www. prefix before extracting the registered domain");
+		System.err.println(
+				"                    \t- host-without-www: strip the www. prefix before extracting the registered domain");
 		System.err.println(" --multipart-suffixes-as-domains\toutput host names which are equal to multi-part");
 		System.err.println("                                \tpublic suffixes (the suffix contains a dot) as domain");
 		System.err.println("                                \tnames, eg. `gov.uk', `freight.aero' or `altoadige.it'.");
