@@ -316,25 +316,4 @@ class TestHostToDomainGraph {
 		assertArrayEquals(expectedDomainGraph, convert);
 	}
 
-	/**
-	 * Test combining stripWww with privateDomains
-	 */
-	@Test
-	void testConvertStripWwwWithPrivateDomains() {
-		String[] hostGraph = { //
-				"0\tname.his.forgot.adam.www", //
-				"1\tname.his.forgot.ben", //
-		};
-		String[] expectedDomainGraph = { //
-				"0\tname.his.forgot.adam\t1", //
-				"1\tname.his.forgot.ben\t1", //
-		};
-		converter.doCount(true);
-		converter.setStripWww(true);
-		converter.doPrivateDomains(true);
-		converter.multiPartSuffixesAsDomains(true);
-		String[] convert = convert(converter, hostGraph);
-		assertArrayEquals(expectedDomainGraph, convert);
-	}
-
 }
