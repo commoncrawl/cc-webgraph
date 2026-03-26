@@ -1,6 +1,6 @@
 # Interactive Graph Exploration
 
-A tutorial how to interactively explore the Common Crawl webgraphs – or other graphs using the webgraph format – using the [JShell](https://docs.oracle.com/en/java/javase/21/jshell/index.html) and the [GraphExplorer](src/main/java/org/commoncrawl/webgraph/explore/GraphExplorer.java) class.
+A tutorial how to interactively explore the Common Crawl web graphs – or other graphs using the [WebGraph](https://webgraph.di.unimi.it/) format – using the [JShell](https://docs.oracle.com/en/java/javase/21/jshell/index.html) and the [GraphExplorer](src/main/java/org/commoncrawl/webgraph/explore/GraphExplorer.java) class.
 
 
 ## Quick Start
@@ -117,13 +117,13 @@ A tutorial how to interactively explore the Common Crawl webgraphs – or other 
 ## Using the Java Classes
 
 The Java classes "GraphExplorer" and "Graph" bundle a set of methods which help exploring the graphs:
-- load the webgraph, its transpose and the vertex map
+- load the web graph, its transpose and the vertex map
 - access the vertices and their successors or predecessors
 - utilities to import or export a list of vertices or counts from or into a file
 
 The methods are bundled in the classes of the Java package `org.commoncrawl.webgraph.explore`. To get an overview over all provided methods, inspect the source code or see the section [Javadocs](README.md#javadocs) in the main README for how to read the Javadocs. Here only few examples are presented.
 
-We start again with launching the JShell and loading a webgraph:
+We start again with launching the JShell and loading a web graph:
 
 ```
 $> jshell --class-path "$CC_WEBGRAPH_JAR" \
@@ -144,7 +144,7 @@ jshell> e.getGraph()
 $45 ==> org.commoncrawl.webgraph.explore.Graph@4f933fd1
 ```
 
-First, the vertices in the webgraphs are represented by numbers. So, we need to translage between vertex label and ID:
+First, the vertices in the web graphs are represented by numbers. So, we need to translage between vertex label and ID:
 
 ```
 jshell> g.vertexLabelToId("org.wikipedia")
@@ -154,7 +154,7 @@ jshell> g.vertexIdToLabel(115107569)
 $47 ==> "org.wikipedia"
 ```
 
-One important note: Common Crawl's webgraphs list the host or domain names in [reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation). The vertex lists are sorted by the reversed names in lexicographic order and then numbered continuously. This gives a close-to-perfect compression of the webgraphs itself. Most of the arcs are close in terms of locality because subdomains or sites of the same region (by country-code top-level domain) are listed in one continous block. Cf. the paper [The WebGraph Framework I: Compression Techniques](https://vigna.di.unimi.it/ftp/papers/WebGraphI.pdf) by Paolo Boldi and Sebastiano Vigna.
+One important note: Common Crawl's web graphs list the host or domain names in [reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation). The vertex lists are sorted by the reversed names in lexicographic order and then numbered continuously. This gives a close-to-perfect compression of the web graphs itself. Most of the arcs are close in terms of locality because subdomains or sites of the same region (by country-code top-level domain) are listed in one continous block. Cf. the paper [The WebGraph Framework I: Compression Techniques](https://vigna.di.unimi.it/ftp/papers/WebGraphI.pdf) by Paolo Boldi and Sebastiano Vigna.
 
 Now, let's look how many other domains are linked from Wikipedia?
 
@@ -163,7 +163,7 @@ jshell> g.outdegree("org.wikipedia")
 $46 ==> 2106338
 ```
 
-Another note: Common Crawl's webgraphs are based on sample crawls of the web. Same as the crawls, also the webgraphs are not complete and the Wikipedia may in reality link to far more domains. But 2 million linked domains is already not a small sample.
+Another note: Common Crawl's web graphs are based on sample crawls of the web. Same as the crawls, also the web graphs are not complete and the Wikipedia may in reality link to far more domains. But 2 million linked domains is already not a small sample.
 
 The Graph class also gives you access to the successors of a vertex, as array or stream of integers, but also as stream of strings (vertex labels):
 
@@ -215,7 +215,7 @@ abogado.super
 ac.789bet
 ```
 
-Technically, webgraphs only store successor lists. But the Graph class holds also two graphs: the "original" one and its transpose. In the transposed graph "successors" are "predecessors", and "outdegree" means "indegree". Some methods on a deeper level take one of the two webgraphs as argument, here it makes a difference whether you pass `g.graph` or `g.graphT`, here to a method which translates vertex IDs to labels and extracts the top-level domain:
+Technically, web graphs only store successor lists. But the Graph class holds also two graphs: the "original" one and its transpose. In the transposed graph "successors" are "predecessors", and "outdegree" means "indegree". Some methods on a deeper level take one of the two web graphs as argument, here it makes a difference whether you pass `g.graph` or `g.graphT`, here to a method which translates vertex IDs to labels and extracts the top-level domain:
 
 ```
 jshell> g.successorTopLevelDomainStream(g.graph, g.vertexLabelToId("org.wikipedia")).limit(5).forEach(System.out::println)

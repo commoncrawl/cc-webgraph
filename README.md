@@ -11,7 +11,7 @@ The Java tools are compiled and packaged by [Maven](https://maven.apache.org/). 
 java -cp target/cc-webgraph-0.1-SNAPSHOT-jar-with-dependencies.jar <classname> <args>...
 ```
 
-The assembly jar file includes also the [WebGraph](https://webgraph.di.unimi.it/) and [LAW](https://law.di.unimi.it/software.php) packages required to process the webgraphs and compute [PageRank](https://en.wikipedia.org/wiki/PageRank) or [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality).
+The assembly jar file includes also the [WebGraph](https://webgraph.di.unimi.it/) and [LAW](https://law.di.unimi.it/software.php) packages required to process the web graphs and compute [PageRank](https://en.wikipedia.org/wiki/PageRank) or [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality).
 
 
 ### Javadocs
@@ -26,7 +26,7 @@ Run `mvn spotless:check` and `mvn spotless:apply`, see the [Spotless Maven guide
 
 ## Memory and Disk Requirements
 
-Note that the webgraphs are usually multiple Gigabytes in size and require for processing
+Note that the web graphs are usually multiple Gigabytes in size and require for processing
 - a sufficient Java heap size ([Java option](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html#extra-options-for-java) `-Xmx`)
 - enough disk space to store the graphs and temporary data.
 
@@ -49,7 +49,7 @@ To analyze the graph structure and calculate rankings you may further process th
 
 A couple of scripts may help you to run the WebGraph tools to build and process the graphs are provided in [src/script/webgraph_ranking/](src/script/webgraph_ranking/). They're also used to prepare the Common Crawl web graph releases.
 
-To process a webgraph and rank the nodes, you should first adapt the configuration to your graph and hardware setup:
+To process a web graph and rank the nodes, you should first adapt the configuration to your graph and hardware setup:
 ```
 vi ./src/script/webgraph_ranking/webgraph_config.sh
 ```
@@ -59,12 +59,12 @@ After running
 ```
 the `output_dir/` should contain all generated files, eg. `graph_name.graph` and `graph_name-ranks.txt.gz`.
 
-The shell script is easily adapted to your needs. Please refer to the [LAW dataset tutorial](https://law.di.unimi.it/tutorial.php), the [API docs of LAW](https://law.di.unimi.it/software/law-docs/index.html) and [webgraph](https://webgraph.di.unimi.it/docs/) for further information.
+The shell script is easily adapted to your needs. Please refer to the [LAW dataset tutorial](https://law.di.unimi.it/tutorial.php), the [API docs of LAW](https://law.di.unimi.it/software/law-docs/index.html) and [WebGraph](https://webgraph.di.unimi.it/docs/) for further information.
 
 
-## Exploring Webgraph Data Sets
+## Exploring Web Graph Data Sets
 
-The Common Crawl webgraph data sets are announced on the [Common Crawl web site](https://commoncrawl.org/tag/webgraph/).
+The Common Crawl web graph data sets are announced on the [Common Crawl web site](https://commoncrawl.org/tag/webgraph/).
 
 For instructions how to explore the web graphs using the JShell please see the tutorial [Interactive Graph Exploration](./graph-exploration-README.md).
 
