@@ -66,9 +66,13 @@ The shell script is easily adapted to your needs. Please refer to the [LAW datas
 
 The Common Crawl webgraph data sets are announced on the [Common Crawl web site](https://commoncrawl.org/tag/webgraph/).
 
-For instructions how to explore the webgraphs using the JShell please see the tutorial [Interactive Graph Exploration](./graph-exploration-README.md). For an older approach using [Jython](https://www.jython.org/) and [pyWebGraph](https://github.com/mapio/py-web-graph), see the [cc-notebooks project](//github.com/commoncrawl/cc-notebooks/tree/master/cc-webgraph-statistics).
+For instructions how to explore the web graphs using the JShell please see the tutorial [Interactive Graph Exploration](./graph-exploration-README.md).
+
+Alternatively, Peter Carragher wrote [pyccwebgraph](https://pypi.org/project/pyccwebgraph/) ([pyccwebgraph on GitHub](https://github.com/PeterCarragher/pyccwebgraph)) which provides not only Python bindings to the Java graph exploration classes, but also tools to analyze and visualize subgraphs.
+
+Another approach by Massimo Santini builds on [Jython](https://www.jython.org/), see [pyWebGraph](https://github.com/mapio/py-web-graph). A tutorial how to explore web graphs using pyWebGraph is found in the [cc-notebooks project](https://github.com/commoncrawl/cc-notebooks/blob/main/cc-webgraph-statistics/interactive_webgraph.md).
 
 
 ## Credits
 
-Thanks to the authors of the [WebGraph framework](https://webgraph.di.unimi.it/) used to process the graphs and compute page rank and harmonic centrality. See also Sebastiano Vigna's projects [webgraph](//github.com/vigna/webgraph) and [webgraph-big](//github.com/vigna/webgraph-big).
+Thanks to the authors of the [WebGraph framework](https://webgraph.di.unimi.it/) used to process the graphs and compute page rank and harmonic centrality. See also Sebastiano Vigna's projects [webgraph](https://github.com/vigna/webgraph) and [webgraph-big](https://github.com/vigna/webgraph-big).
