@@ -110,6 +110,41 @@ class TestHostToDomainGraph {
 			"3\tno.hordalandfolkemusikklag\t1", //
 	};
 
+	// issue #33 : domain output not sorted with input B
+	String[] hostGraphOutputSortingA = { //
+			"0\tno.hedland", //
+			"1\tno.hedmark-folkemusikklag", //
+			"2\tno.hedmark-trafikk", //
+			"3\tno.hedmark.m", //
+			"4\tno.hedmark.os.www", //
+			"5\tno.hedmark.www", //
+			"6\tno.hedmarktrafikk", //
+	};
+	String[] hostGraphOutputSortingB = { //
+			"0\tno.hedland", //
+			"1\tno.hedmark-folkemusikklag", //
+			"2\tno.hedmark-trafikk", //
+			"3\tno.hedmark.os.www", //
+			"4\tno.hedmark.www", //
+			"5\tno.hedmarktrafikk", //
+	};
+	String[] domainGraphOutputSortingA = { //
+			"0\tno.hedland\t1", //
+			"1\tno.hedmark\t2", //
+			"2\tno.hedmark-folkemusikklag\t1", //
+			"3\tno.hedmark-trafikk\t1", //
+			"4\tno.hedmark.os.www\t1", //
+			"5\tno.hedmarktrafikk\t1", //
+	};
+	String[] domainGraphOutputSortingB = { //
+			"0\tno.hedland\t1", //
+			"1\tno.hedmark\t1", //
+			"2\tno.hedmark-folkemusikklag\t1", //
+			"3\tno.hedmark-trafikk\t1", //
+			"4\tno.hedmark.os.www\t1", //
+			"5\tno.hedmarktrafikk\t1", //
+	};
+
 	/**
 	 * <code>forgot.his.name</name> is in the "private section" of the public suffix
 	 * list, while <code>name</name> is in the ICANN section, see
@@ -194,7 +229,7 @@ class TestHostToDomainGraph {
 	}
 
 	/**
-	 * test whether node names are properly sorted and IDs are correctly assigned
+	 * Test whether node names are properly sorted and IDs are correctly assigned
 	 * (sequentially, strictly monotonically increasing, no gaps)
 	 */
 	void testSorted(String[] graph) {
@@ -274,6 +309,26 @@ class TestHostToDomainGraph {
 		assertArrayEquals(
 				domainGraphHyphenatedDomainsInclMultiPartSuffixes,
 				convert(converter, hostGraphHyphenatedDomains));
+	}
+
+	@Test
+	void testConvertNodesOutputSortingA() {
+		testSorted(hostGraphOutputSortingA);
+		testSorted(domainGraphOutputSortingA);
+		converter.doCount(true);
+		String[] output = convert(converter, hostGraphOutputSortingA);
+		testSorted(output);
+		assertArrayEquals(domainGraphOutputSortingA, output);
+	}
+
+	@Test
+	void testConvertNodesOutputSortingB() {
+		testSorted(hostGraphOutputSortingB);
+		testSorted(domainGraphOutputSortingB);
+		converter.doCount(true);
+		String[] output = convert(converter, hostGraphOutputSortingB);
+		testSorted(output);
+		assertArrayEquals(domainGraphOutputSortingB, output);
 	}
 
 	@Test
