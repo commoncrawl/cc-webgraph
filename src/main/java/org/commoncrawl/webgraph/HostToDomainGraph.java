@@ -81,6 +81,7 @@ public class HostToDomainGraph {
 	private long numInputLinesEdges = 0;
 	protected String lastRevHost = null;
 	protected Domain lastDomain = null;
+	protected String lastOutputDomain = null;
 	private TreeMap<String, Domain> domainQueue = new TreeMap<>();
 	private int maxQueueUsed = 0;
 
@@ -401,7 +402,7 @@ public class HostToDomainGraph {
 			String firstDomain = domainQueue.firstKey();
 			if (!Domain.isSafeToOutput(firstDomain, revDomainName)) {
 				/*
-				 * queued domains are sorted lexicographically: if the first/current domain
+				 * Queued domains are sorted lexicographically: if the first/current domain
 				 * cannot be safely dequeued and written to output, this is also the case for
 				 * the following ones.
 				 */
@@ -430,6 +431,7 @@ public class HostToDomainGraph {
 	}
 
 	private void getNodeLine(StringBuilder b, Domain domain) {
+		String domainName = null;
 		if (domain == null)
 			return;
 		if (domain.id >= 0 && domain.name != null) {
@@ -438,7 +440,8 @@ public class HostToDomainGraph {
 			}
 			b.append(domain.id);
 			b.append('\t');
-			b.append(reverseHost(domain.name));
+			domainName = reverseHost(domain.name);
+			b.append(domainName);
 			if (countHosts) {
 				b.append('\t');
 				b.append(domain.numberOfHosts);
@@ -447,6 +450,13 @@ public class HostToDomainGraph {
 		for (Long hostId : domain.ids) {
 			setValue(hostId.longValue(), domain.id);
 		}
+		if (lastOutputDomain != null && lastOutputDomain.compareTo(domainName) >= 0) {
+			String msg = "Output domains are not strictly monotonically sorted: " + lastOutputDomain + " <> "
+					+ domainName;
+			LOG.error(msg);
+			throw new RuntimeException(msg);
+		}
+		lastOutputDomain = domainName;
 	}
 
 	public String convertEdge(String line) {
