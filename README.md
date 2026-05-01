@@ -16,7 +16,7 @@ The assembly jar file includes also the [WebGraph](https://webgraph.di.unimi.it/
 
 ### Javadocs
 
-The Javadocs are created by `mvn javadoc:javadoc`. Then open the file `target/site/apidocs/index.html` in a browser.
+The Javadocs are created by `mvn javadoc:javadoc`. Then open the file `target/reports/apidocs/index.html` in a browser.
 
 
 ### Source Code Formatting
@@ -41,7 +41,7 @@ The host-level web graph is built with help of PySpark, the corresponding code i
 
 ### Domain-Level Web Graph
 
-The domain-level web graph is distilled from the host-level graph by mapping host names to domain names. The ID mapping is kept in memory as an int array or [FastUtil's big array](https://fastutil.di.unimi.it/docs/it/unimi/dsi/fastutil/BigArrays.html) if the host-level graph has more vertices than a Java array can hold (around 2³¹). The Java tool to fold the host graph is best run from the script [host2domaingraph.sh](src/script/host2domaingraph.sh).
+The domain-level web graph is distilled from the host-level graph by mapping host names to domain names. The ID mapping is kept in memory as an int array or [FastUtil's big array](https://fastutil.di.unimi.it/docs/it/unimi/dsi/fastutil/BigArrays.html) if the host-level graph has more vertices than a Java array can hold (around 2³¹). The Java tool to fold the host graph is best run from the script [host2domaingraph.sh](src/script/host2domaingraph.sh). Please, see the script and the Java class [HostToDomainGraph](src/main/java/org/commoncrawl/webgraph/HostToDomainGraph.java) for further details.
 
 ### Processing Graphs using the WebGraph Framework
 

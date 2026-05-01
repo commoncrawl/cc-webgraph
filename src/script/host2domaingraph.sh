@@ -84,15 +84,17 @@ PARALLEL_SORT_THREADS=2
 #        | sort $SORTOPTS -t$'\t' -k2,2 | sed -e 's/\.$//'
 #   The domain name "ac.gov.ascension" in the example above becomes temporarily
 #   "ac.gov.ascension." and is now sorted after "ac.gov.ascension-island."
-#   
-#   To avoid this step (re-sorting billions of lines is expensive), the HostToDomainGraph
-#   class now caches potentially "missorted" candidates and processes them later together
-#   with the related subdomains / host names.
 #
-#   Note: The final sorting of the domain names is the same as if there would be
-#   a trailing dot:
-#     ac.gov.ascension-island
-#     ac.gov.ascension
+#   A sort order that keeps hosts/domains of a common suffix in one block can be
+#   also achieved if dots are replaced by commas:
+#     zcat vertices.txt.gz | tr . , \
+#        | sort $SORTOPTS -t$'\t' -k2,2 | tr , .
+#   This approach is utilized by the "Sort-friendly URI Reordering Transform" (SURT),
+#   see <http://crawler.archive.org/articles/user_manual/glossary.html#surt>.
+#
+#   To avoid the re-sorting of the input (sorting billions of lines is expensive),
+#   the HostToDomainGraph class now caches potentially "missorted" candidates and
+#   processes them later together with the related subdomains / host names.
 #
 # 3 The public suffix list adds a further issue: there are multi-part suffixes,
 #   such as "co.uk" (or "uk.co" in reverse domain name notation). And the suffixes
@@ -100,7 +102,7 @@ PARALLEL_SORT_THREADS=2
 #   suffix. But they do not need to. For example: "no" and "os.hordaland.no" are
 #   in the public suffix list but "hordaland.no" is not. In this situation,
 #   adding a trailing dot does not even guarantee that all hosts of a domain under
-#   a public suffix is in a contiguous block:
+#   a public suffix are in a contiguous block:
 #
 #    $> cat hordaland.txt
 #    no.hordaland
@@ -121,7 +123,26 @@ PARALLEL_SORT_THREADS=2
 #   The host names "no.hordaland." and "no.hordaland.oygarden." both
 #   are under the domain ""no.hordaland" (public suffix is "no").
 #
+#   4 Ideally, the domain output should be lexicographically sorted
+#     as well. This is a requirement to store the map of node names and IDs
+#     in an "immutable external prefix map" (IEPM).
+#     If a trailing dot is added and then removed (and no cache is used), the
+#     output sorting would be consequently the same as if there is a trailing dot:
+#       ac.gov.ascension-island.
+#       ac.gov.ascension.
+#     respectively
+#       ac.gov.ascension-island
+#       ac.gov.ascension
+#
+#     The required ASCII sorting is:
+#       ac.gov.ascension
+#       ac.gov.ascension-island
+#
+#     Note: The approach to replace dots by commas ensures proper lexicographic
+#     sorting even if the replacement is inverted.
+#
 #   Please see https://github.com/commoncrawl/cc-webgraph/issues/3
+#   and https://github.com/commoncrawl/cc-webgraph/issues/33
 #   for further details.
 #
 
