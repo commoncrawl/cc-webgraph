@@ -65,18 +65,30 @@ PARALLEL_SORT_THREADS=2
 # 1 C locale is mandatory to keep reversed hosts of one domain or top-level domain
 #   together in a single block:
 #     echo -e "com.opus\ncom.opera\nco.mopus\nco.mopera" | shuf | LC_ALL=en_US.utf8 sort
+#     co.mopera
+#     com.opera
+#     com.opus
+#     co.mopus
 #   vs.
 #     echo -e "com.opus\ncom.opera\nco.mopus\nco.mopera" | shuf | LC_ALL=C sort
+#     co.mopera
+#     co.mopus
+#     com.opera
+#     com.opus
 #   This requirement is met by the output of the cc-pyspark job.
 #
-# 2 The second problem stems from the fact that a hyphen (valid in host and
-#   subdomain names) is sorted before the dot:
+# In an older version, the input was re-sorted to try to group
+# domains and their subdomains together:
+#
+# 2 Sorting with C locale, places a hyphen (valid in host and subdomain names)
+#   before a dot:
 #     ac.gov
 #     ac.gov.ascension
 #     ac.gov.ascension-island
 #     ac.gov.ascension.mail
-#   Unfortunately the output of the cc-pyspark job does not completely meet this
-#   sorting criterion.
+#   This causes that the domain "ac.gov.ascension" and its subdomain "ac.gov.ascension.mail"
+#   end up in two separated blocks of the input, even with sorting using the C locale.
+#
 #   The initial solution to ensure that the subdomains of "ac.gov.ascension" are not split
 #   into two blocks, was to add an artificial dot temporarily to the end of each host
 #   name during sorting:
@@ -92,58 +104,72 @@ PARALLEL_SORT_THREADS=2
 #   This approach is utilized by the "Sort-friendly URI Reordering Transform" (SURT),
 #   see <http://crawler.archive.org/articles/user_manual/glossary.html#surt>.
 #
-#   To avoid the re-sorting of the input (sorting billions of lines is expensive),
-#   the HostToDomainGraph class now caches potentially "missorted" candidates and
-#   processes them later together with the related subdomains / host names.
+# However, the public suffix list adds a further issue, which makes it impossible
+# to group domains and subdomains together, by simply sorting the input:
 #
-# 3 The public suffix list adds a further issue: there are multi-part suffixes,
-#   such as "co.uk" (or "uk.co" in reverse domain name notation). And the suffixes
-#   of a multi-part suffix can be public suffixes themselves: also "uk" is a public
-#   suffix. But they do not need to. For example: "no" and "os.hordaland.no" are
-#   in the public suffix list but "hordaland.no" is not. In this situation,
-#   adding a trailing dot does not even guarantee that all hosts of a domain under
-#   a public suffix are in a contiguous block:
+# 3 There are multi-part suffixes, such as "co.uk" (or "uk.co" in reverse domain name
+#   notation). And the suffixes of a multi-part suffix can be public suffixes themselves:
+#   also "uk" is a public suffix. But they do not need to. For example: "no" and
+#   "os.hordaland.no" are in the public suffix list but "hordaland.no" is not.
+#   In this situation, adding a trailing dot does not even guarantee that all hosts of
+#   a domain under a public suffix are in a contiguous block:
 #
-#    $> cat hordaland.txt
-#    no.hordaland
-#    no.hordaland-teater
-#    no.hordaland.os
-#    no.hordaland.os.bibliotek
-#    no.hordaland.oygarden
-#    no.hordalandfolkemusikklag
+#     $> cat hordaland.txt
+#     no.hordaland
+#     no.hordaland-teater
+#     no.hordaland.os
+#     no.hordaland.os.bibliotek
+#     no.hordaland.oygarden
+#     no.hordalandfolkemusikklag
 #
-#    $> cat hordaland.txt | sed 's/$/./' | LC_ALL=C sort
-#    no.hordaland-teater.
-#    no.hordaland.
-#    no.hordaland.os.
-#    no.hordaland.os.bibliotek.
-#    no.hordaland.oygarden.
-#    no.hordalandfolkemusikklag.
+#     $> cat hordaland.txt | sed 's/$/./' | LC_ALL=C sort
+#     no.hordaland-teater.
+#     no.hordaland.
+#     no.hordaland.os.
+#     no.hordaland.os.bibliotek.
+#     no.hordaland.oygarden.
+#     no.hordalandfolkemusikklag.
 #
 #   The host names "no.hordaland." and "no.hordaland.oygarden." both
 #   are under the domain ""no.hordaland" (public suffix is "no").
 #
-#   4 Ideally, the domain output should be lexicographically sorted
-#     as well. This is a requirement to store the map of node names and IDs
-#     in an "immutable external prefix map" (IEPM).
-#     If a trailing dot is added and then removed (and no cache is used), the
-#     output sorting would be consequently the same as if there is a trailing dot:
-#       ac.gov.ascension-island.
-#       ac.gov.ascension.
-#     respectively
-#       ac.gov.ascension-island
-#       ac.gov.ascension
+# To address this issue (point 3), the HostToDomainGraph class now caches
+# potentially "missorted" candidates and processes them later together
+# with the related subdomains / host names.
 #
-#     The required ASCII sorting is:
-#       ac.gov.ascension
-#       ac.gov.ascension-island
+# 4 This also addresses the fact, that re-sorting billions of input lines is
+#   computationally expensive.
 #
-#     Note: The approach to replace dots by commas ensures proper lexicographic
-#     sorting even if the replacement is inverted.
+# Output sorting:
 #
-#   Please see https://github.com/commoncrawl/cc-webgraph/issues/3
-#   and https://github.com/commoncrawl/cc-webgraph/issues/33
-#   for further details.
+# 5 Ideally, the domain output should be lexicographically sorted
+#   as well. This is a requirement to store the map of node names and IDs
+#   in an "immutable external prefix map" (IEPM).
+#   If a trailing dot is added and then removed (and no cache is used), the
+#   output sorting would be consequently the same as if there is a trailing dot:
+#     ac.gov.ascension-island.
+#     ac.gov.ascension.
+#   respectively (after removing the trailing dot)
+#     ac.gov.ascension-island
+#     ac.gov.ascension
+#
+#   The required ASCII sorting is:
+#     ac.gov.ascension
+#     ac.gov.ascension-island
+#
+#   We cannot re-sort the output because this would also require to change
+#   the node IDs because the WebGraph framework expects the arc/edge input
+#   to be numerically sorted. And the vertices/nodes are enumerated as they
+#   are sorted, i.e. node IDs are line numbers starting with zero.
+#
+#   Note: The approach to replace dots by commas ensures proper lexicographic
+#   sorting even if the replacement is inverted. However, it does not guarantee
+#   that all domains of one suffix are in a contigous block, if that suffix
+#   is a suffix of another suffix. See point 3.
+#
+# Please see https://github.com/commoncrawl/cc-webgraph/issues/3
+# and https://github.com/commoncrawl/cc-webgraph/issues/33
+# for further details.
 #
 
 export LC_ALL=C

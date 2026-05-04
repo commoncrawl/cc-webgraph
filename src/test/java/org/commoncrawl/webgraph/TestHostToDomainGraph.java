@@ -110,8 +110,11 @@ class TestHostToDomainGraph {
 			"3\tno.hordalandfolkemusikklag\t1", //
 	};
 
-	// issue #33 : domain output not sorted with input B
-	String[] hostGraphOutputSortingA = { //
+	/*
+	 * Issue #33 : domain output not sorted if domain name is a string suffix of
+	 * public suffix appears only after the longer suffix.
+	 */
+	String[] hostGraphDomainInSuffixA = { //
 			"0\tno.hedland", //
 			"1\tno.hedmark-folkemusikklag", //
 			"2\tno.hedmark-trafikk", //
@@ -120,7 +123,7 @@ class TestHostToDomainGraph {
 			"5\tno.hedmark.www", //
 			"6\tno.hedmarktrafikk", //
 	};
-	String[] hostGraphOutputSortingB = { //
+	String[] hostGraphDomainInSuffixB = { //
 			"0\tno.hedland", //
 			"1\tno.hedmark-folkemusikklag", //
 			"2\tno.hedmark-trafikk", //
@@ -128,7 +131,7 @@ class TestHostToDomainGraph {
 			"4\tno.hedmark.www", //
 			"5\tno.hedmarktrafikk", //
 	};
-	String[] domainGraphOutputSortingA = { //
+	String[] domainGraphDomainInSuffixA = { //
 			"0\tno.hedland\t1", //
 			"1\tno.hedmark\t2", //
 			"2\tno.hedmark-folkemusikklag\t1", //
@@ -136,7 +139,7 @@ class TestHostToDomainGraph {
 			"4\tno.hedmark.os.www\t1", //
 			"5\tno.hedmarktrafikk\t1", //
 	};
-	String[] domainGraphOutputSortingB = { //
+	String[] domainGraphDomainInSuffixB = { //
 			"0\tno.hedland\t1", //
 			"1\tno.hedmark\t1", //
 			"2\tno.hedmark-folkemusikklag\t1", //
@@ -312,23 +315,23 @@ class TestHostToDomainGraph {
 	}
 
 	@Test
-	void testConvertNodesOutputSortingA() {
-		testSorted(hostGraphOutputSortingA);
-		testSorted(domainGraphOutputSortingA);
+	void testConvertNodesEnsureSortedOutputA() {
+		testSorted(hostGraphDomainInSuffixA);
+		testSorted(domainGraphDomainInSuffixA);
 		converter.doCount(true);
-		String[] output = convert(converter, hostGraphOutputSortingA);
+		String[] output = convert(converter, hostGraphDomainInSuffixA);
 		testSorted(output);
-		assertArrayEquals(domainGraphOutputSortingA, output);
+		assertArrayEquals(domainGraphDomainInSuffixA, output);
 	}
 
 	@Test
-	void testConvertNodesOutputSortingB() {
-		testSorted(hostGraphOutputSortingB);
-		testSorted(domainGraphOutputSortingB);
+	void testConvertNodesEnsureSortedOutputB() {
+		testSorted(hostGraphDomainInSuffixB);
+		testSorted(domainGraphDomainInSuffixB);
 		converter.doCount(true);
-		String[] output = convert(converter, hostGraphOutputSortingB);
+		String[] output = convert(converter, hostGraphDomainInSuffixB);
 		testSorted(output);
-		assertArrayEquals(domainGraphOutputSortingB, output);
+		assertArrayEquals(domainGraphDomainInSuffixB, output);
 	}
 
 	@Test
