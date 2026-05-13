@@ -81,6 +81,7 @@ public class HostToDomainGraph {
 	private long numInputLinesEdges = 0;
 	protected String lastRevHost = null;
 	protected Domain lastDomain = null;
+	protected String lastOutputDomain = null;
 	private TreeMap<String, Domain> domainQueue = new TreeMap<>();
 	private int maxQueueUsed = 0;
 
@@ -197,17 +198,26 @@ public class HostToDomainGraph {
 				char c1 = d1.charAt(i);
 				char c2 = d2.charAt(i);
 				if (c1 != c2) {
+					if (c1 == HYPHEN && c2 == DOT) {
+						/*
+						 * Cannot finish "no.hedmark-folkemusikklag" unless "no.hedmark.os.www" is done
+						 * because input which is mapped to a suffix (a prefix in reversed domain name
+						 * notation) is still expected, e.g. "no.hedmark.www" which is mapped to
+						 * "no.hedmark".
+						 */
+						return 0;
+					}
 					return c1 - c2;
 				} else if (c1 == HYPHEN) {
 					/*
-					 * cannot finish "org.example-domain" unless "org.example" is done
+					 * Cannot finish "org.example-domain" unless "org.example" is done.
 					 */
 					return 0;
 				} else if (c1 == DOT) {
 					dots++;
 					if (dots > 1) {
 						/*
-						 * cannot finish "name.his.forgot.foobar" unless "name.his" is done
+						 * Cannot finish "name.his.forgot.foobar" unless "name.his" is done.
 						 * 
 						 * This is a special case of multi-part suffixes with more than two parts when
 						 * the first part is also a public suffix, e.g. (in reversed domain name
@@ -401,7 +411,7 @@ public class HostToDomainGraph {
 			String firstDomain = domainQueue.firstKey();
 			if (!Domain.isSafeToOutput(firstDomain, revDomainName)) {
 				/*
-				 * queued domains are sorted lexicographically: if the first/current domain
+				 * Queued domains are sorted lexicographically: if the first/current domain
 				 * cannot be safely dequeued and written to output, this is also the case for
 				 * the following ones.
 				 */
@@ -430,6 +440,7 @@ public class HostToDomainGraph {
 	}
 
 	private void getNodeLine(StringBuilder b, Domain domain) {
+		String domainName = null;
 		if (domain == null)
 			return;
 		if (domain.id >= 0 && domain.name != null) {
@@ -438,7 +449,8 @@ public class HostToDomainGraph {
 			}
 			b.append(domain.id);
 			b.append('\t');
-			b.append(reverseHost(domain.name));
+			domainName = reverseHost(domain.name);
+			b.append(domainName);
 			if (countHosts) {
 				b.append('\t');
 				b.append(domain.numberOfHosts);
@@ -447,6 +459,13 @@ public class HostToDomainGraph {
 		for (Long hostId : domain.ids) {
 			setValue(hostId.longValue(), domain.id);
 		}
+		if (lastOutputDomain != null && lastOutputDomain.compareTo(domainName) >= 0) {
+			String msg = "Output domains are not strictly monotonically sorted: " + lastOutputDomain + " <> "
+					+ domainName;
+			LOG.error(msg);
+			throw new RuntimeException(msg);
+		}
+		lastOutputDomain = domainName;
 	}
 
 	public String convertEdge(String line) {
@@ -540,8 +559,7 @@ public class HostToDomainGraph {
 		System.err.println("                  	        \tpublic suffix list, ");
 		System.err.println(
 				"                  	        \tsee https://github.com/publicsuffix/list/wiki/Format#divisions)");
-		System.err
-				.println("                            \t- host-without-www: strip the www. prefix (keep the ");
+		System.err.println("                            \t- host-without-www: strip the www. prefix (keep the ");
 		System.err.println("                            \tfull host otherwise)");
 		System.err.println(" --multipart-suffixes-as-domains\toutput host names which are equal to multi-part");
 		System.err.println("                                \tpublic suffixes (the suffix contains a dot) as domain");
