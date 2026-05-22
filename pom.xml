@@ -23,7 +23,7 @@
 		<fastutil.version>8.5.18</fastutil.version>
 		<crawler.commons.version>1.6</crawler.commons.version>
 
-		<slf4j-api.version>2.0.17</slf4j-api.version>
+		<slf4j-api.version>2.0.18</slf4j-api.version>
 
 		<junit.version>5.14.3</junit.version>
 	</properties>
@@ -58,12 +58,6 @@
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>fastutil-core</artifactId>
 			<version>${fastutil.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>commons-cli</groupId>
-			<artifactId>commons-cli</artifactId>
-			<version>1.5.0</version>
 		</dependency>
 
 		<!-- WebGraph framework (https://webgraph.di.unimi.it/)
@@ -168,11 +162,26 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<!-- it.unimi.dsi.law.rank.PageRankParallelGaussSeidel requires -->
+		<!-- it.unimi.dsi.law.rank.PageRankParallelGaussSeidel requires commons-configuration2 -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-configuration2</artifactId>
 			<version>2.15.0</version>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- commons-configuration2 requires a newer version of
+				 commons-lang3 than required by it.unimi.dsi:law -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.20.0</version>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- commons-configuration2 also requires commons-io -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.22.0</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
