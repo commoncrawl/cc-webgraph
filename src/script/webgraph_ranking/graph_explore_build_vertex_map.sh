@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Build node indexes to interactively explore a Common Crawl webgraph.
 # The webgraph files are expected to be placed in the current directory.
