@@ -22,9 +22,9 @@ fi
 
 
 if [ "$TYPE" == "domain" ]; then
-    zcat $NAME-vertices.txt.gz
+    gzip -dc $NAME-vertices.txt.gz
 else
-    zcat vertices/*.txt.gz
+    gzip -dc vertices/*.txt.gz
 fi \
     | cut -f2- \
     | paste $NAME.outdegrees $NAME.indegrees - \
@@ -38,7 +38,7 @@ fi
 
 (echo -e "$HEADER";
  set +o pipefail;
- zcat $NAME-outdegrees-indegrees.txt.gz \
+ gzip -dc $NAME-outdegrees-indegrees.txt.gz \
      | perl -aF'\t' -lne 'print if $F[0] > 1000' \
      | sort -k1,1nr \
      | head -10000) \
@@ -46,7 +46,7 @@ fi
 
 (echo -e "$HEADER";
  set +o pipefail;
- zcat $NAME-outdegrees-indegrees.txt.gz \
+ gzip -dc $NAME-outdegrees-indegrees.txt.gz \
      | perl -aF'\t' -lne 'print if $F[1] > 1000' \
      | sort -k2,2nr \
      | head -10000) \
