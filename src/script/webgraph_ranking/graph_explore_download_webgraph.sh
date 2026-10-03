@@ -104,7 +104,7 @@ if [ "$GRAPH_AGGR_LEVEL" == "domain" ]; then
     download_files "$NAME-vertices" txt.gz
 else
     download_files "$NAME-vertices" paths.gz
-    zcat "$NAME-vertices".paths.gz \
+    gzip -dc "$NAME-vertices".paths.gz \
         | while read path; do
         file=${path#projects/hyperlinkgraph/$BASE_NAME/$GRAPH_AGGR_LEVEL/}
         mkdir -p $(dirname "$file")

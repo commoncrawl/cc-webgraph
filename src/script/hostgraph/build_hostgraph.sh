@@ -115,13 +115,13 @@ function dump_upload_text() (
     if [ $n_vertex_files -eq 1 ]; then
         mv output/$NAME/hostgraph/tmp_vertices/*.gz output/$NAME/hostgraph/vertices.txt.gz
     else
-        zcat output/$NAME/hostgraph/tmp_vertices/*.gz | gzip >output/$NAME/hostgraph/vertices.txt.gz
+        gzip -dc output/$NAME/hostgraph/tmp_vertices/*.gz | gzip >output/$NAME/hostgraph/vertices.txt.gz
     fi
     aws s3 cp --no-progress output/$NAME/hostgraph/vertices.txt.gz $S3_OUTPUT_PREFIX/$UPLOAD_NAME/hostgraph/
     hadoop fs -copyToLocal "$HDFS_BASE_DIR"/text/$NAME/edges/*.gz output/$NAME/hostgraph/tmp_edges/
     sort_input=""
     for e in output/$NAME/hostgraph/tmp_edges/*.gz; do
-        sort_input="$sort_input <(zcat $e)"
+        sort_input="$sort_input <(gzip -dc $e)"
     done
     mkdir -p tmp
     eval "sort --batch-size 96 --buffer-size 4g --parallel 2 --temporary-directory ./tmp/ --compress-program=gzip -t$'\t' -k1,1n -k2,2n --stable --merge $sort_input | gzip >output/$NAME/hostgraph/edges.txt.gz"
@@ -151,7 +151,7 @@ function create_input_splits() {
         if $INCLUDE_ROBOTSTXT_SITEMAP_LINKS; then
             aws s3 cp --quiet --no-progress s3://commoncrawl/crawl-data/$CRAWL/robotstxt.paths.gz .
         fi
-        zcat ./*.paths.gz | shuf >input.txt
+        gzip -dc ./*.paths.gz | shuf >input.txt
         NUM_INPUT_PATHS=$(wc -l <input.txt)
         NUM_SPLITS=$((1+NUM_INPUT_PATHS/MAX_INPUT_SIZE))
         if [ $NUM_SPLITS -gt 0 ]; then

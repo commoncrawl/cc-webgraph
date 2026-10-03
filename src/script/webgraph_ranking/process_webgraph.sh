@@ -85,7 +85,7 @@ function join_rank() (
     ### unpack scores with LAW, join node names via paste,
     ### assign ranks on sorted lines by nl
     $LW it.unimi.dsi.law.io.tool.DataInput2Text --type $_DATA_TYPE $_IN - \
-        | paste - <(zcat $_VERT | cut -f2$_EXTRA_FIELDS) \
+        | paste - <(gzip -dc $_VERT | cut -f2$_EXTRA_FIELDS) \
         | sort --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip -t$'\t' -k1,1gr --stable \
         | nl -w1 -nln \
         | gzip >$_OUT
@@ -105,9 +105,9 @@ function join_harmonicc_pagerank() (
     fi
     SORTOPTS="$SORT_PARALLEL_THREADS_OPT --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
     (echo -e "$HEADER";
-     zcat $_IN_HC | sort $SORTOPTS -t$'\t' -k3,3 --unique --stable \
+     gzip -dc $_IN_HC | sort $SORTOPTS -t$'\t' -k3,3 --unique --stable \
          | join -a1 -a2 -e'---' -t$'\t' -j3 -o1.1,1.2,2.1,2.2,0$_EXTRA_FIELDS - \
-                <(zcat $_IN_PR | sort $SORTOPTS -t$'\t' -k3,3 --unique --stable) \
+                <(gzip -dc $_IN_PR | sort $SORTOPTS -t$'\t' -k3,3 --unique --stable) \
          | sort $SORTOPTS -t$'\t' -k1,1n -s) \
      | gzip >$_OUT
 )
@@ -139,7 +139,7 @@ function join_ranks_in_memory() (
     JAVAOPTS="-Xmx${JAVA_HEAP_GB}g"
     SORTOPTS="$SORT_PARALLEL_THREADS_OPT --batch-size=$SORT_BATCHES --buffer-size=$SORT_BUFFER_SIZE --compress-program=gzip"
     (echo -e "$HEADER";
-     JAVA_OPTS=$JAVA_OPTS $WG org.commoncrawl.webgraph.JoinSortRanks $OPTS <(zcat $_VERT) $_HC $_PR -) \
+     JAVA_OPTS=$JAVA_OPTS $WG org.commoncrawl.webgraph.JoinSortRanks $OPTS <(gzip -dc $_VERT) $_HC $_PR -) \
       | sort $SORTOPTS -t$'\t' -k1,1n --stable | gzip >$_OUT
 )
 
@@ -155,21 +155,21 @@ function join_degrees() (
         # _VERT is a directory with multiple vertices files
         _VERT="$_VERT/*.gz"
     fi
-    zcat $_VERT \
+    gzip -dc $_VERT \
         | cut -f2- \
         | paste $FULLNAME.outdegrees $FULLNAME.indegrees - \
         | gzip >$FULLNAME-outdegrees-indegrees.txt.gz
     # top-N out/indegrees
     (echo -e "$HEADER";
      set +o pipefail;
-     zcat $FULLNAME-outdegrees-indegrees.txt.gz \
+     gzip -dc $FULLNAME-outdegrees-indegrees.txt.gz \
          | perl -aF'\t' -lne 'print if $F[0] > 1000' \
          | sort -k1,1nr \
          | head -10000) \
         | gzip >$FULLNAME-outdegrees-indegrees-topout.txt.gz
     (echo -e "$HEADER";
      set +o pipefail;
-     zcat $FULLNAME-outdegrees-indegrees.txt.gz \
+     gzip -dc $FULLNAME-outdegrees-indegrees.txt.gz \
          | perl -aF'\t' -lne 'print if $F[1] > 1000' \
          | sort -k2,2nr \
          | head -10000) \
@@ -205,7 +205,7 @@ if [ -d $EDGES ]; then
     # edges is a directory with multiple files
     sort_input=""
     for e in $EDGES/part-*.gz; do
-        sort_input="$sort_input <(zcat $e)"
+        sort_input="$sort_input <(gzip -dc $e)"
     done
     if ${USE_WEBGRAPH_BIG:-false}; then
         ## TODO:
@@ -231,10 +231,10 @@ if [ -d $EDGES ]; then
 else
     if ${USE_WEBGRAPH_BIG:-false}; then
         _step bvgraph \
-              bash -c "zcat $EDGES | $WG $WGP.BVGraph --once -g $WGP.ArcListASCIIGraph - $FULLNAME"
+              bash -c "gzip -dc $EDGES | $WG $WGP.BVGraph --once -g $WGP.ArcListASCIIGraph - $FULLNAME"
     else
         _step bvgraph \
-              $WG $WGP.BVGraph --threads $THREADS -g $WGP.ArcListASCIIGraph <(zcat $EDGES) $FULLNAME
+              $WG $WGP.BVGraph --threads $THREADS -g $WGP.ArcListASCIIGraph <(gzip -dc $EDGES) $FULLNAME
     fi
 fi
 

@@ -92,14 +92,14 @@ PARALLEL_SORT_THREADS=2
 #   The initial solution to ensure that the subdomains of "ac.gov.ascension" are not split
 #   into two blocks, was to add an artificial dot temporarily to the end of each host
 #   name during sorting:
-#     zcat vertices.txt.gz | sed -e 's/$/./' \
+#     gzip -dc vertices.txt.gz | sed -e 's/$/./' \
 #        | sort $SORTOPTS -t$'\t' -k2,2 | sed -e 's/\.$//'
 #   The domain name "ac.gov.ascension" in the example above becomes temporarily
 #   "ac.gov.ascension." and is now sorted after "ac.gov.ascension-island."
 #
 #   A sort order that keeps hosts/domains of a common suffix in one block can be
 #   also achieved if dots are replaced by commas:
-#     zcat vertices.txt.gz | tr . , \
+#     gzip -dc vertices.txt.gz | tr . , \
 #        | sort $SORTOPTS -t$'\t' -k2,2 | tr , .
 #   This approach is utilized by the "Sort-friendly URI Reordering Transform" (SURT),
 #   see <http://crawler.archive.org/articles/user_manual/glossary.html#surt>.
@@ -234,9 +234,9 @@ fi
                     org.commoncrawl.webgraph.HostToDomainGraph \
                     "${FLAGS[@]}" \
                     $SIZE \
-                    <(zcat $_VERTICES) \
+                    <(gzip -dc $_VERTICES) \
                     >(gzip >"$OUTPUTDIR"/vertices.txt.gz) \
-                    <(zcat $_EDGES) \
+                    <(gzip -dc $_EDGES) \
                     >(sort $SORTOPTS -t$'\t' -k1,1n -k2,2n -s -u | gzip >"$OUTPUTDIR"/edges.txt.gz)
 
 LOG__ "Waiting for data to be written to disk..."
