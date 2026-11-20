@@ -102,10 +102,10 @@ if [ -e $NAME.iepm ]; then
     index_status
     exit 0
 fi
-CAT_VERTICES="zcat $VERTICES"
+CAT_VERTICES="gzip -dc $VERTICES"
 if [ -d $VERTICES ]; then
     # host-level webgraph, multiple vertex files
-    CAT_VERTICES="zcat $VERTICES/*.txt.gz"
+    CAT_VERTICES="gzip -dc $VERTICES/*.txt.gz"
 fi
 if (set -eo pipefail;
     eval $CAT_VERTICES \
@@ -126,7 +126,7 @@ fi
 #   (reversed domain name) to node ID
 # - a front coded list to map node IDs to node labels
 if ! [ -e $NAME.mph ] || ! [ -e $NAME.fcl ]; then
-    zcat $VERTICES \
+    gzip -dc $VERTICES \
         | cut -f2 \
         | tee >("$WG" it.unimi.dsi.sux4j.mph.GOV4Function $NAME.mph) \
         | "$WG" it.unimi.dsi.util.FrontCodedStringList --utf8 --ratio 32 $NAME.fcl
@@ -135,7 +135,7 @@ fi
 # build the `smph` file (string map perfect hash) required to
 # determine whether a node label is present in the `mph` file
 if ! [ -e $NAME.smph ]; then
-    zcat $VERTICES \
+    gzip -dc $VERTICES \
         | cut -f2 \
         | "$WG" it.unimi.dsi.util.ShiftAddXorSignedStringMap $NAME.mph $NAME.smph
 fi
